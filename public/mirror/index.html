@@ -2149,6 +2149,7 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
       setTimeout(finish, animMs);
     });
 
+    loader.complete = true;
     document.documentElement.dataset.ciaoIntroMotion = 'complete';
     lenis.start();
     document.documentElement.style.overflow = '';
@@ -2798,7 +2799,9 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
           defaults: { ease: 'power3.out' },
           delay: 0.5,
           onStart: () => {
-            if (typeof window.__ciaoLoader?.play === 'function') window.__ciaoLoader.play();
+            if (typeof window.__ciaoLoader?.play === 'function' && !window.__ciaoLoader.complete && document.documentElement.dataset.ciaoIntroMotion !== 'running') {
+              window.__ciaoLoader.play();
+            }
           },
           onComplete: () => {
             document.documentElement.style.overflow = '';
@@ -4321,6 +4324,13 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
   }
   function setLayer(el,show){if(!el)return;el.style.setProperty('opacity',show?'1':'0','important');el.style.setProperty('visibility',show?'visible':'hidden','important');el.style.pointerEvents=show?'auto':'none'}
   function syncCopyLayers(){
+    if(document.documentElement.dataset.ciaoIntroMotion==='running'){
+      [hero,heroTitle,profile,profileFlavor,...benefitContainers].forEach((el)=>setLayer(el,false));
+      if(benefitsNav){benefitsNav.style.setProperty('opacity','0','important');benefitsNav.style.setProperty('visibility','hidden','important');}
+      benefitIcons.forEach((icon)=>icon.classList.remove('is-active'));
+      document.documentElement.dataset.copyStage='intro';
+      return;
+    }
     const y=window.scrollY;
     const total=Math.max(1,document.documentElement.scrollHeight-window.innerHeight);
     const progress=y/total;
@@ -4364,27 +4374,14 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
 })();
 </script>
 
+
+
 <script>
 (function(){
-  let startX=0,startY=0,tracking=false;
-  function inHero(){
-    const profile=document.querySelector('section.is-profile');
-    return !profile || scrollY < profile.offsetTop - innerHeight*.35;
-  }
-  function carousel(){return document.documentElement.__ciaoCarousel || window.__ciaoCarousel;}
-  document.addEventListener('touchstart',function(e){
-    if(!inHero()||!e.touches||!e.touches[0])return;
-    startX=e.touches[0].clientX;startY=e.touches[0].clientY;tracking=true;
-  },{passive:true,capture:true});
-  document.addEventListener('touchend',function(e){
-    if(!tracking)return;
-    const touch=e.changedTouches&&e.changedTouches[0];
-    const dx=touch?touch.clientX-startX:0,dy=touch?touch.clientY-startY:0;
-    const c=carousel();
-    if(Math.abs(dx)>44&&Math.abs(dx)>Math.abs(dy)*1.15&&c){dx<0?c.next():c.previous();}
-    tracking=false;
-  },{passive:true,capture:true});
+  let sx=0,sy=0,startIndex=0,tracking=false;
+  function c(){return document.documentElement.__ciaoCarousel||window.__ciaoCarousel}
+  document.addEventListener('touchstart',e=>{if(scrollY>innerHeight*.8||!e.touches?.[0])return;const carousel=c();startIndex=Number(carousel?.index||0);sx=e.touches[0].clientX;sy=e.touches[0].clientY;tracking=true},{passive:true,capture:true});
+  document.addEventListener('touchend',e=>{if(!tracking)return;tracking=false;const t=e.changedTouches?.[0],dx=t?t.clientX-sx:0,dy=t?t.clientY-sy:0,carousel=c();if(Math.abs(dx)>44&&Math.abs(dx)>Math.abs(dy)*1.15&&carousel){const target=startIndex+(dx<0?1:-1);setTimeout(()=>carousel.goTo(target),0)}},{passive:true,capture:true});
 })();
 </script>
-
 </body></html>

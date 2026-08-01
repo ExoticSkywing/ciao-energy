@@ -1,7 +1,7 @@
 export default function Page() {
   return (
     <iframe
-      src="/mirror/index.html?v=native-loader-owner-05"
+      src="/mirror/index.html?v=native-intro-isolated-06"
       title="Ciao Energy"
       style={{
         position: "fixed",
