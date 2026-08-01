@@ -1,0 +1,13 @@
+.next/
+node_modules/
+.env*
+!.env.example
+.DS_Store
+npm-debug.log*
+.venv/
+.playwright-browsers/
+docs/research/**/*.json
+docs/research/source.html
+docs/research/original.css
+docs/checkpoints/*.tar.gz
+docs/checkpoints/*.sha256

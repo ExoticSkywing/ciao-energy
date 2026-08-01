@@ -1,0 +1,28 @@
+{
+  "source": "https://www.ciaoenergy.com",
+  "routes": [
+    {
+      "route": "/",
+      "bytes": 178985
+    },
+    {
+      "route": "/mentions-legales",
+      "bytes": 24505
+    },
+    {
+      "route": "/cgu",
+      "bytes": 25319
+    },
+    {
+      "route": "/politique-de-confidentialite",
+      "bytes": 25882
+    }
+  ],
+  "vendor_files": 71,
+  "rewritten_text_files": 2,
+  "safety": {
+    "analytics_removed": true,
+    "newsletter_submission_disabled": true,
+    "recaptcha_loader_removed": true
+  }
+}
