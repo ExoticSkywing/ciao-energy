@@ -199,8 +199,7 @@
 <style>
 .source-loader-retired{display:none!important}
 .local-intro{position:fixed;inset:0;z-index:2147483647;background:#000;display:flex;align-items:center;justify-content:center;opacity:1;visibility:visible;pointer-events:auto}
-.local-intro-logo{display:block;width:24.1svh;height:auto;object-fit:contain;opacity:0}
-.local-intro-video{position:absolute;top:49.2%;left:49.9%;width:24.1svh;height:auto;transform:scaleX(.95) translate(-50%,-50%);transform-origin:0 0;object-fit:contain}
+.local-intro-logo{display:block;width:min(25svh,34vw);height:auto;object-fit:contain}
 .local-intro-percent{position:absolute;left:50%;bottom:max(2rem,env(safe-area-inset-bottom));transform:translateX(-50%);color:#fff;font:400 1rem/1 monospace;letter-spacing:1rem;white-space:nowrap}
 @keyframes local-intro-layer-out{to{opacity:0;visibility:hidden;pointer-events:none}}
 </style>
@@ -208,12 +207,6 @@
 (function(){
   var value=0;
   var started=performance.now();
-  var introVideo=document.querySelector('.local-intro-video');
-  if(introVideo){
-    introVideo.muted=true;introVideo.playsInline=true;introVideo.loop=false;
-    var playPromise=introVideo.play();
-    if(playPromise&&playPromise.catch)playPromise.catch(function(){});
-  }
   function step(now){
     var el=document.querySelector('.local-intro-percent');
     if(!el)return;
@@ -242,9 +235,6 @@
 .section.is-benefits[data-benefit-active="true"] .benefits_container{opacity:1;visibility:visible;pointer-events:auto}
 </style>
 </head><body><div class="local-intro" aria-label="Ciao Energy loading">
-  <video class="local-intro-video" muted playsinline preload="auto">
-    <source src="/mirror/media/loader-ciao-v2.mp4" type="video/mp4" />
-  </video>
   <img class="local-intro-logo" src="/assets/vertical-can.svg" alt="Ciao Energy" />
   <div class="local-intro-percent" aria-live="polite">0%</div>
 </div>
@@ -2126,13 +2116,10 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
     tl.set(data, {
       camPosZ: 25,
       spacing: 10,
-      baseOffset: 0,
+      baseOffset: 3,
       wave: 0,
       swirl: 0,
-      canRotX: 0,
-      canRotY: 0,
-      canRotZ: 0,
-      lightWidth: 0.05,
+      lightWidth: 2,
       lightIntensity: 0,
       canSpin: (Math.PI / 180) * 20,
       pointerInfluence: 0,
@@ -2142,9 +2129,6 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
       data,
       {
         lightIntensity: 30,
-        lightWidth: 1,
-        baseOffset: 3,
-        duration: 1.15,
       },
       0,
     );
@@ -2822,7 +2806,6 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
         if (introLayer) {
           introLayer.style.background = 'transparent';
           introLayer.querySelector('.local-intro-logo')?.style.setProperty('opacity', '0');
-          introLayer.querySelector('.local-intro-video')?.style.setProperty('opacity', '0');
           introLayer.querySelector('.local-intro-percent')?.style.setProperty('opacity', '0');
         }
         gsap.set(canvas, { autoAlpha: 1, scale: 1 });
