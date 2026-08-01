@@ -1,7 +1,7 @@
 export default function Page() {
   return (
     <iframe
-      src="/mirror/index.html?v=loader-layer-cleanup-07"
+      src="/mirror/index.html?v=loader-layer-cleanup-08"
       title="Ciao Energy"
       style={{
         position: "fixed",
