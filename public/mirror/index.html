@@ -155,16 +155,16 @@
   /* Local mirror completion contract: retain the complete loader video/logo/percentage,
      then enter the verified local scene instead of getting stranded at 99%. */
   .loader {
-    animation: none !important;
+    animation: local-loader-out 0.65s cubic-bezier(.55,0,1,.45) 8.15s both !important;
   }
   .loader_percent {
-    animation: none;
+    animation: local-percent-complete 0.45s ease-out 7.2s both;
   }
   canvas {
-    animation: none !important;
+    animation: local-scene-in 1.2s cubic-bezier(.16,1,.3,1) 8.1s both !important;
   }
   .gamme_container,.navbar,.hud {
-    animation: none !important;
+    animation: local-ui-in 0.9s cubic-bezier(.16,1,.3,1) 8.35s both !important;
   }
   html,body {
     animation: local-scroll-release 0s linear 8.8s forwards;
@@ -198,7 +198,7 @@
 
 <style>
 .source-loader-retired{display:none!important}
-.local-intro{position:fixed;inset:0;z-index:2147483647;background:#000;display:flex;align-items:center;justify-content:center;opacity:1;visibility:visible;pointer-events:auto}
+.local-intro{position:fixed;inset:0;z-index:2147483647;background:#000;display:flex;align-items:center;justify-content:center;opacity:1;visibility:visible;pointer-events:auto;animation:local-intro-layer-out .65s cubic-bezier(.55,0,1,.45) 7.65s forwards}
 .local-intro-logo{display:block;width:min(25svh,34vw);height:auto;object-fit:contain}
 .local-intro-percent{position:absolute;left:50%;bottom:max(2rem,env(safe-area-inset-bottom));transform:translateX(-50%);color:#fff;font:400 1rem/1 monospace;letter-spacing:1rem;white-space:nowrap}
 @keyframes local-intro-layer-out{to{opacity:0;visibility:hidden;pointer-events:none}}
@@ -2800,23 +2800,6 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
         });
         gsap.to(loaderPercent, { autoAlpha: 0, duration: 0.4, ease: 'power2.in', delay: 0.3 });
 
-        const introLayer = document.querySelector('.local-intro');
-        const sourceLoader = document.querySelector('.loader');
-        if (sourceLoader) gsap.set(sourceLoader, { display: 'none', autoAlpha: 0, pointerEvents: 'none' });
-        if (introLayer) {
-          introLayer.style.background = 'transparent';
-          introLayer.querySelector('.local-intro-logo')?.style.setProperty('opacity', '0');
-          introLayer.querySelector('.local-intro-percent')?.style.setProperty('opacity', '0');
-        }
-        gsap.set(canvas, { autoAlpha: 1, scale: 1 });
-        gsap.set(gammeContainer, { autoAlpha: 1, yPercent: 0 });
-
-        // Let the module-owned WebGL timeline perform the can entrance while the loader
-        // remains as a transparent interaction shield; this removes the previous black gap.
-        const scenePromise = typeof window.loader?.play === 'function' ? window.loader.play() : Promise.resolve();
-        await scenePromise;
-        document.documentElement.dataset.introCanMotionComplete = 'true';
-
         const tl = gsap.timeline({
           defaults: { ease: 'power3.out' },
           delay: 0.5,
@@ -2824,7 +2807,6 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
             document.documentElement.style.overflow = '';
             document.body.style.overflow = '';
             window.__ciaoLenis?.start();
-            if (introLayer) gsap.set(introLayer, { display: 'none', autoAlpha: 0, pointerEvents: 'none' });
 
             if (window.ScrollTrigger) ScrollTrigger.refresh();
           },
@@ -2836,8 +2818,8 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
           loaderWrapper,
           {
             autoAlpha: 0,
-            duration: 0.01,
-            ease: 'none',
+            duration: 0.6,
+            ease: 'power2.in',
             onComplete: () => gsap.set(loaderWrapper, { display: 'none' }),
           },
           0,
@@ -2852,7 +2834,6 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
         const sceneCanvas = document.querySelector('canvas');
         gsap.set(sceneCanvas, { autoAlpha: 1, scale: 1 });
         gsap.set(gammeContainer, { autoAlpha: 1, yPercent: 0 });
-        if (introLayer) gsap.set(introLayer, { display: 'none', autoAlpha: 0, pointerEvents: 'none' });
       };
 
       const onSceneReady = () => {
@@ -4407,7 +4388,7 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
     const touch=e.changedTouches&&e.changedTouches[0];
     const dx=touch?touch.clientX-startX:0,dy=touch?touch.clientY-startY:0;
     const c=carousel();
-    if(Math.abs(dx)>44&&Math.abs(dx)>Math.abs(dy)*1.15&&c){e.stopImmediatePropagation();dx<0?c.next():c.previous();}
+    if(Math.abs(dx)>44&&Math.abs(dx)>Math.abs(dy)*1.15&&c){dx<0?c.next():c.previous();}
     tracking=false;
   },{passive:true,capture:true});
 })();
