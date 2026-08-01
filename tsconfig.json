@@ -40,6 +40,9 @@
     ".claude",
     ".venv",
     ".playwright-browsers",
+    "public/mirror/vendor",
+    "public/mirror/media",
+    "scripts",
     "docs"
   ]
 }

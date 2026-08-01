@@ -1,6 +1,6 @@
 from playwright.sync_api import sync_playwright
 
-URL = "http://45.8.22.65:44118/mirror/index.html?copy-timing-verify=1"
+URL = "http://45.8.22.65:44119/mirror/index.html?copy-timing-verify=1"
 CHECKPOINTS = [0, 0.08, 0.14, 0.18, 0.22, 0.27, 0.31, 0.36, 0.40, 0.45, 0.40, 0.31, 0.22, 0.14, 0.08, 0]
 SELECTORS = [
     ".carousel_title-collection",

@@ -1,5 +1,5 @@
 from playwright.sync_api import sync_playwright
-URL='http://45.8.22.65:44118/mirror/index.html?benefits-reverse=1'
+URL='http://45.8.22.65:44119/mirror/index.html?benefits-reverse=1'
 with sync_playwright() as p:
  b=p.chromium.launch(headless=True,args=['--no-sandbox'])
  page=b.new_page(viewport={'width':390,'height':844})

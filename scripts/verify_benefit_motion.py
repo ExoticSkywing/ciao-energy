@@ -1,6 +1,6 @@
 from playwright.sync_api import sync_playwright
 
-URL = "http://45.8.22.65:44118/mirror/index.html?benefit-motion-verify=1"
+URL = "http://45.8.22.65:44119/mirror/index.html?benefit-motion-verify=1"
 SEQUENCE = [(0.14, 1), (0.22, 2), (0.31, 3), (0.40, 4), (0.31, 3), (0.22, 2), (0.14, 1)]
 
 with sync_playwright() as p:

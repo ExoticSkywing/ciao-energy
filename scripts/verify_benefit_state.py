@@ -1,6 +1,6 @@
 from playwright.sync_api import sync_playwright
 
-URL = "http://45.8.22.65:44118/mirror/index.html?benefit-state-verify=1"
+URL = "http://45.8.22.65:44119/mirror/index.html?benefit-state-verify=1"
 CHECKS = [(0.14, 0), (0.22, 1), (0.31, 2), (0.40, 3), (0.31, 2), (0.22, 1), (0.14, 0)]
 
 with sync_playwright() as p:
