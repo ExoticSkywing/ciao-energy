@@ -3898,20 +3898,19 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
       source.start(0);
     };
 
-    // === Déblocage au 1er geste (autoplay policy) ===
-    const unlock = () => {
+    // iOS/WKWebView: the first completed swipe is permission-only. It intentionally
+    // produces no sound; every existing semantic callback works from the next gesture.
+    const unlock = (event) => {
       initCtx();
-      if (ctx.state === 'suspended') ctx.resume();
-      unlocked = true;
-      window.removeEventListener('pointerdown', unlock);
-      window.removeEventListener('touchstart', unlock);
-      window.removeEventListener('keydown', unlock);
-      window.removeEventListener('wheel', unlock);
+      const resume = ctx.state === 'suspended' ? ctx.resume() : Promise.resolve();
+      Promise.resolve(resume).then(() => {
+        unlocked = ctx.state === 'running';
+        document.documentElement.dataset.ciaoAudioUnlocked = unlocked ? 'true' : 'false';
+        document.documentElement.dataset.ciaoAudioUnlockEvent = event.type;
+        if (unlocked) window.removeEventListener('touchend', unlock, true);
+      });
     };
-    window.addEventListener('pointerdown', unlock);
-    window.addEventListener('touchstart', unlock);
-    window.addEventListener('keydown', unlock);
-    window.addEventListener('wheel', unlock);
+    window.addEventListener('touchend', unlock, { passive: true, capture: true });
 
     preload();
 
