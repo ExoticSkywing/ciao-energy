@@ -1,7 +1,7 @@
 export default function Page() {
   return (
     <iframe
-      src="/mirror/index.html?v=hero-taste-glow-zero-clean-03"
+      src="/mirror/index.html?v=hero-parent-release-08"
       title="Ciao Energy"
       style={{
         position: "fixed",

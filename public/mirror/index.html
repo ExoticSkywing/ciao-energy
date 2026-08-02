@@ -2787,6 +2787,7 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
       const hideTargets = [gammeContainer, navbar, hud, canvas].filter(Boolean);
       hideTargets.forEach((el) => gsap.set(el, { autoAlpha: 0 }));
       document.documentElement.dataset.ciaoIntroMotion = 'loading';
+      document.documentElement.dataset.ciaoHeroIntroReleased = 'false';
       gsap.set(document.body, { '--loader-reveal': '100vh' });
 
       let sceneReady = false;
@@ -2816,6 +2817,7 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
           defaults: { ease: 'power3.out' },
           delay: 0.5,
           onStart: () => {
+            document.documentElement.dataset.ciaoHeroIntroReleased = 'true';
             if (typeof window.__ciaoLoader?.play === 'function' && !window.__ciaoLoader.complete && document.documentElement.dataset.ciaoIntroMotion !== 'running') {
               window.__ciaoLoader.play();
             }
@@ -4332,7 +4334,10 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
   function setLayer(el,show){if(!el)return;el.style.setProperty('opacity',show?'1':'0','important');el.style.setProperty('visibility',show?'visible':'hidden','important');el.style.pointerEvents=show?'auto':'none'}
   function syncCopyLayers(){
     if(document.documentElement.dataset.ciaoIntroMotion!=='complete' && document.documentElement.dataset.ciaoIntroMotion){
-      [hero,heroTitle,profile,profileFlavor,...benefitContainers].forEach((el)=>setLayer(el,false));
+      const releaseHero=document.documentElement.dataset.ciaoHeroIntroReleased==='true';
+      setLayer(hero,releaseHero);
+      setLayer(heroTitle,releaseHero);
+      [profile,profileFlavor,...benefitContainers].forEach((el)=>setLayer(el,false));
       if(benefitsNav){benefitsNav.style.setProperty('opacity','0','important');benefitsNav.style.setProperty('visibility','hidden','important');}
       benefitIcons.forEach((icon)=>icon.classList.remove('is-active'));
       document.documentElement.dataset.copyStage='intro';
