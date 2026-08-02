@@ -195,7 +195,16 @@
   .local-interaction-ready,.local-interaction-ready body{overflow:auto!important;touch-action:pan-y}
   .local-interaction-ready canvas{touch-action:none;pointer-events:auto!important}
   @media (max-width:1023px){
-    .local-interaction-ready .gamme_gradient,.local-interaction-ready .gamme_gradient-wrapper{display:none!important;animation:none!important}
+    .local-interaction-ready .gamme_gradient-wrapper{
+      display:block!important;
+      visibility:visible;
+      animation:none!important;
+      filter:blur(6rem);
+    }
+    .local-interaction-ready .gamme_gradient{
+      display:block!important;
+      animation:none!important;
+    }
   }
 
 </style>
@@ -4178,16 +4187,6 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
 })();
 </script>
 
-<script>
-(function(){
-  if(window.innerWidth>=1024)return;
-  function hideMobileGradient(){
-    document.querySelectorAll('.gamme_gradient,.gamme_gradient-wrapper').forEach(function(el){el.style.setProperty('display','none','important');el.style.setProperty('animation','none','important')});
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',hideMobileGradient);else hideMobileGradient();
-  setTimeout(hideMobileGradient,9000);
-})();
-</script>
 
 <script>
 (function(){
