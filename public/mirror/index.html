@@ -4301,6 +4301,17 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
   const benefitIcons=[...document.querySelectorAll('.benefits_icon-wrapper')];
   const benefitsNav=document.querySelector('.benefits_nav');
   let animatedBenefit=-1;
+  let profileFlavorIndex=-1;
+  function syncProfileFlavorIndex(){
+    if(document.documentElement.dataset.copyStage!=='profile')return;
+    const carousel=window.__ciaoCarousel;
+    const index=Number(carousel?.index||0);
+    if(index===profileFlavorIndex)return;
+    profileFlavorIndex=index;
+    const slides=[...document.querySelectorAll('.carousel_title-b')];
+    slides.forEach((slide,i)=>setLayer(slide,i===index));
+    profileFallback.style.setProperty('display',index===0?'flex':'none','important');
+  }
   function animateBenefit(index){
     if(index===animatedBenefit)return;
     const previous=animatedBenefit;
@@ -4327,9 +4338,12 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
   }
   function syncProfileFlavor(){
     const on=document.documentElement.dataset.copyStage==='profile';
-    // A dedicated visible title prevents SplitText's child masks from keeping the semantic
-    // Profile heading transparent on iOS Safari. The original hidden collection is left to GSAP.
-    setLayer(profileFallback,on);
+    if(!on){
+      profileFlavorIndex=-1;
+      setLayer(profileFallback,false);
+      return;
+    }
+    syncProfileFlavorIndex();
   }
   function setLayer(el,show){if(!el)return;el.style.setProperty('opacity',show?'1':'0','important');el.style.setProperty('visibility',show?'visible':'hidden','important');el.style.pointerEvents=show?'auto':'none'}
   function syncCopyLayers(){
@@ -4398,7 +4412,11 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
 (function(){
   let sx=0,sy=0,startIndex=0,tracking=false;
   function c(){return document.documentElement.__ciaoCarousel||window.__ciaoCarousel}
-  document.addEventListener('touchstart',e=>{if(scrollY>innerHeight*.8||!e.touches?.[0])return;const carousel=c();startIndex=Number(carousel?.index||0);sx=e.touches[0].clientX;sy=e.touches[0].clientY;tracking=true},{passive:true,capture:true});
+  function canSwipe(){
+    const stage=document.documentElement.dataset.copyStage;
+    return stage==='hero'||stage==='profile';
+  }
+  document.addEventListener('touchstart',e=>{if(!canSwipe()||!e.touches?.[0])return;const carousel=c();startIndex=Number(carousel?.index||0);sx=e.touches[0].clientX;sy=e.touches[0].clientY;tracking=true},{passive:true,capture:true});
   document.addEventListener('touchend',e=>{if(!tracking)return;tracking=false;const t=e.changedTouches?.[0],dx=t?t.clientX-sx:0,dy=t?t.clientY-sy:0,carousel=c();if(Math.abs(dx)>44&&Math.abs(dx)>Math.abs(dy)*1.15&&carousel){const target=startIndex+(dx<0?1:-1);setTimeout(()=>carousel.goTo(target),0)}},{passive:true,capture:true});
 })();
 </script>
