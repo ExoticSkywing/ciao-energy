@@ -146,6 +146,28 @@
 
   .benefits_nav {
     position: fixed;
+    z-index: 40;
+    pointer-events: auto;
+  }
+
+  .benefits_nav .benefits_icon-wrapper {
+    position: relative;
+    z-index: 1;
+    pointer-events: auto;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  .benefits_nav .benefits_icon-wrapper::before {
+    content: "";
+    position: absolute;
+    inset: -8px;
+    pointer-events: none;
+  }
+
+  .benefits_nav .benefits_icon-wrapper > *,
+  .benefits_nav .benefits_icon-wrapper::after {
+    pointer-events: none;
   }
 
   .loader {
@@ -227,8 +249,8 @@
 <style>
 /* Benefits are fixed full-viewport layers. Visibility must be mutually exclusive even
    when iOS skips ScrollTrigger callbacks during fast touch paging. */
-.section.is-benefits .benefits_container{opacity:0;visibility:hidden;pointer-events:none}
-.section.is-benefits[data-benefit-active="true"] .benefits_container{opacity:1;visibility:visible;pointer-events:auto}
+.section.is-benefits .benefits_container{opacity:0;visibility:hidden;pointer-events:none!important}
+.section.is-benefits[data-benefit-active="true"] .benefits_container{opacity:1;visibility:visible;pointer-events:none!important}
 /* The fixed Argument slogan belongs only to the downstream Argument section. Without
    an explicit state gate it leaks ZERO BULLSHIT behind the Hero on iOS/local startup. */
 .argument_container{opacity:0;visibility:hidden;pointer-events:none}
@@ -1680,6 +1702,7 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
   section.goTo = (index) => {
     scroll.to(section.items[index % (section.items.length - 1)].top);
   };
+  window.__ciaoScrollToSection = (index) => section.goTo(index);
 
   section.resize = () => {
     section.items.length = 0;
@@ -1701,6 +1724,7 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
   };
 
   section.resize();
+  window.__ciaoSectionItems = section.items;
 
   // #endregion Sections
   // #region Swipe State
@@ -1720,6 +1744,7 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
     deltaY: 0,
     direction: 0,
   };
+  window.__ciaoSwipe = swipe;
 
   // #endregion Swipe State
   // #region Timeline
@@ -2574,6 +2599,7 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
     renderer.setSize(window.innerWidth, window.innerHeight);
 
     section.resize();
+    window.__ciaoSectionItems = section.items;
     timeline = createTimeline();
   });
 
@@ -3608,7 +3634,7 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
       const sections = $$('.section.is-benefits');
       if (!sections.length) return;
 
-      const entries = sections
+      const entries = [...sections]
         .map((section) => ({
           section,
           container: $('.benefits_container', section),
@@ -3661,7 +3687,7 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
         });
       };
 
-      lenis.on('scroll', syncBenefitState);
+      if (typeof lenis?.on === 'function') lenis.on('scroll', syncBenefitState);
       window.addEventListener('scroll', syncBenefitState, { passive: true });
       window.addEventListener('resize', syncBenefitState);
       const benefitStateLoop = () => {
@@ -3678,6 +3704,41 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
       if (!nav || !sections.length || !profileSection) return;
 
       const icons = $$('.benefits_icon-wrapper', nav);
+      const goToBenefit = (index) => {
+        const section = sections[index];
+        if (!section) return;
+        const destination = Math.max(0, Number(window.__ciaoSectionItems?.[index + 2]?.top ?? section.offsetTop));
+        document.documentElement.dataset.ciaoBenefitNavTarget = String(index + 1);
+        document.documentElement.dataset.ciaoBenefitOverride = String(index + 1);
+        document.documentElement.dataset.ciaoBenefitOverrideUntil = String(performance.now() + 1100);
+        icons.forEach((icon, i) => {
+          const active = i === index;
+          icon.classList.toggle('is-active', active);
+          icon.setAttribute('aria-current', active ? 'step' : 'false');
+        });
+        if (window.__ciaoLenis?.scrollTo) {
+          window.__ciaoLenis.scrollTo(destination, {
+            duration: 0.85,
+            force: true,
+            lock: false,
+          });
+        } else if (window.__ciaoScrollToSection) {
+          window.__ciaoScrollToSection(index + 2);
+        } else {
+          window.scrollTo({ top: destination, behavior: 'smooth' });
+        }
+      };
+
+      icons.forEach((icon, index) => {
+        icon.setAttribute('role', 'button');
+        icon.setAttribute('aria-label', `Voir le bénéfice ${index + 1}`);
+        icon.addEventListener('click', (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          goToBenefit(index);
+        });
+      });
+      window.__ciaoBenefitsNav = { goTo: goToBenefit };
 
       const tl = gsap.timeline({
         defaults: { duration: 0.5, ease: 'power2.inOut' },
@@ -3913,19 +3974,28 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
       source.start(0);
     };
 
-    // iOS/WKWebView: the first completed swipe is permission-only. It intentionally
-    // produces no sound; every existing semantic callback works from the next gesture.
+    // Keep iOS/WKWebView on the first completed touch gesture, while desktop
+    // unlocks earlier in the same natural action so the following click can play once.
+    const unlockEvents = ['pointerdown', 'touchend', 'keydown'];
+    const removeUnlockListeners = () => {
+      unlockEvents.forEach((type) => window.removeEventListener(type, unlock, true));
+    };
     const unlock = (event) => {
+      // A touch also emits pointer events. Ignore its pointerdown so iOS remains
+      // permission-only on touchend and existing semantic audio starts next gesture.
+      if (event.type === 'pointerdown' && event.pointerType === 'touch') return;
       initCtx();
       const resume = ctx.state === 'suspended' ? ctx.resume() : Promise.resolve();
       Promise.resolve(resume).then(() => {
         unlocked = ctx.state === 'running';
         document.documentElement.dataset.ciaoAudioUnlocked = unlocked ? 'true' : 'false';
         document.documentElement.dataset.ciaoAudioUnlockEvent = event.type;
-        if (unlocked) window.removeEventListener('touchend', unlock, true);
+        if (unlocked) removeUnlockListeners();
       });
     };
-    window.addEventListener('touchend', unlock, { passive: true, capture: true });
+    unlockEvents.forEach((type) =>
+      window.addEventListener(type, unlock, { passive: true, capture: true }),
+    );
 
     preload();
 
@@ -4259,6 +4329,10 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
 }
 .local-profile-title span{display:block}
 @media (min-width:1024px){.local-profile-title{bottom:4rem;font-size:clamp(4rem,8vw,9rem)}}
+/* The native Profile title is the only title owner once the split-text runtime is healthy.
+   Keep the legacy iOS fallback permanently out of the paint tree to prevent a one-frame flash
+   during the Hero → Profile handoff. */
+.local-profile-title{display:none!important}
 @media (max-width:1023px){
   html[data-copy-stage="profile"] .carousel_title-bis-wrapper{
     z-index:6!important;
@@ -4291,10 +4365,6 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
   const profile=document.querySelector('.profile_container');
   const profileFlavor=document.querySelector('.carousel_title-bis-wrapper');
   const profileFlavorCollection=document.querySelector('.carousel_title-bis-collection');
-  const profileFallback=document.createElement('div');
-  profileFallback.className='local-profile-title';
-  profileFallback.innerHTML='<span>DOUBLE</span><span>LITCHI</span>';
-  document.body.appendChild(profileFallback);
   const profileSection=document.querySelector('.section.is-profile');
   const benefitSections=[...document.querySelectorAll('.section.is-benefits')];
   const benefitContainers=benefitSections.map(s=>s.querySelector('.benefits_container'));
@@ -4302,6 +4372,9 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
   const benefitsNav=document.querySelector('.benefits_nav');
   let animatedBenefit=-1;
   let profileFlavorIndex=-1;
+  let hasCompletedIntro=false;
+  let heroSourceReleased=false;
+  let profileSourceReleased=false;
   function syncProfileFlavorIndex(){
     if(document.documentElement.dataset.copyStage!=='profile')return;
     const carousel=window.__ciaoCarousel;
@@ -4310,7 +4383,6 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
     profileFlavorIndex=index;
     const slides=[...document.querySelectorAll('.carousel_title-b')];
     slides.forEach((slide,i)=>setLayer(slide,i===index));
-    profileFallback.style.setProperty('display',index===0?'flex':'none','important');
   }
   function animateBenefit(index){
     if(index===animatedBenefit)return;
@@ -4340,14 +4412,35 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
     const on=document.documentElement.dataset.copyStage==='profile';
     if(!on){
       profileFlavorIndex=-1;
-      setLayer(profileFallback,false);
       return;
     }
     syncProfileFlavorIndex();
   }
   function setLayer(el,show){if(!el)return;el.style.setProperty('opacity',show?'1':'0','important');el.style.setProperty('visibility',show?'visible':'hidden','important');el.style.pointerEvents=show?'auto':'none'}
+  function releaseHeroToSource(){
+    if(heroSourceReleased)return;
+    heroSourceReleased=true;
+    [hero,heroTitle].forEach((el)=>{
+      if(!el)return;
+      el.style.removeProperty('opacity');
+      el.style.removeProperty('visibility');
+      el.style.removeProperty('pointer-events');
+    });
+  }
+  function releaseProfileToSource(){
+    if(profileSourceReleased)return;
+    profileSourceReleased=true;
+    [profile,profileFlavor].forEach((el)=>{
+      if(!el)return;
+      el.style.removeProperty('opacity');
+      el.style.removeProperty('visibility');
+      el.style.removeProperty('pointer-events');
+    });
+  }
   function syncCopyLayers(){
-    if(document.documentElement.dataset.ciaoIntroMotion!=='complete' && document.documentElement.dataset.ciaoIntroMotion){
+    const introMotion=document.documentElement.dataset.ciaoIntroMotion;
+    if(introMotion==='complete') hasCompletedIntro=true;
+    if(!hasCompletedIntro && introMotion!=='complete' && introMotion){
       const releaseHero=document.documentElement.dataset.ciaoHeroIntroReleased==='true';
       setLayer(hero,releaseHero);
       setLayer(heroTitle,releaseHero);
@@ -4357,9 +4450,13 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
       document.documentElement.dataset.copyStage='intro';
       return;
     }
-    const y=window.scrollY;
-    const total=Math.max(1,document.documentElement.scrollHeight-window.innerHeight);
-    const progress=y/total;
+    const runtime = window.__ciaoLenis;
+    const scrollHeight = Number(runtime && runtime.dimensions ? runtime.dimensions.scrollHeight : 0);
+    const viewportHeight = Number(runtime && runtime.dimensions ? runtime.dimensions.height : window.innerHeight);
+    const total = Math.max(1, scrollHeight > viewportHeight ? scrollHeight - viewportHeight : document.documentElement.scrollHeight - window.innerHeight);
+    const rawScrollY = Number(runtime && Number.isFinite(runtime.animatedScroll) ? runtime.animatedScroll : window.scrollY);
+    const y = ((rawScrollY % total) + total) % total;
+    const progress = y / total;
     // Measured from the live source at 390x844. Keep DOM copy in the same semantic
     // windows as the source scene instead of waiting for local section offset boundaries.
     let stage='none',active=-1;
@@ -4375,10 +4472,13 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
       if(y<fullGammeTop-window.innerHeight) stage='argument';
       else stage='full-gamme';
     }
-    setLayer(hero,stage==='hero');
-    setLayer(heroTitle,stage==='hero');
-    setLayer(profile,stage==='profile');
-    setLayer(profileFlavor,stage==='profile');
+    const overrideUntil=Number(document.documentElement.dataset.ciaoBenefitOverrideUntil||0);
+    const overrideIndex=Number(document.documentElement.dataset.ciaoBenefitOverride||0)-1;
+    if(performance.now()<overrideUntil&&overrideIndex>=0&&overrideIndex<benefitContainers.length){
+      stage='benefit';active=overrideIndex;
+    }
+    releaseHeroToSource();
+    releaseProfileToSource();
     benefitContainers.forEach((c,i)=>setLayer(c,stage==='benefit'&&i===active));
     benefitSections.forEach((section,i)=>{
       const on=stage==='benefit'&&i===active;
@@ -4418,6 +4518,56 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
   }
   document.addEventListener('touchstart',e=>{if(!canSwipe()||!e.touches?.[0])return;const carousel=c();startIndex=Number(carousel?.index||0);sx=e.touches[0].clientX;sy=e.touches[0].clientY;tracking=true},{passive:true,capture:true});
   document.addEventListener('touchend',e=>{if(!tracking)return;tracking=false;const t=e.changedTouches?.[0],dx=t?t.clientX-sx:0,dy=t?t.clientY-sy:0,carousel=c();if(Math.abs(dx)>44&&Math.abs(dx)>Math.abs(dy)*1.15&&carousel){const target=startIndex+(dx<0?1:-1);setTimeout(()=>carousel.goTo(target),0)}},{passive:true,capture:true});
+})();
+</script>
+
+<script>
+(function(){
+  if(!window.__ciaoBenefitsHitRouter){
+    window.__ciaoBenefitsHitRouter=true;
+    document.addEventListener('pointerup',(event)=>{
+      if(window.__ciaoBenefitsNav)return;
+      const icon=event.target.closest?.('.benefits_nav .benefits_icon-wrapper');
+      if(!icon)return;
+      const icons=[...document.querySelectorAll('.benefits_nav .benefits_icon-wrapper')];
+      const index=icons.indexOf(icon);
+      if(index<0)return;
+      const section=document.querySelectorAll('.section.is-benefits')[index];
+      const destination=Math.max(0,Number(window.__ciaoSectionItems?.[index+2]?.top??section?.offsetTop??0));
+      document.documentElement.dataset.ciaoBenefitNavTarget=String(index+1);
+      document.documentElement.dataset.ciaoBenefitOverride=String(index+1);
+      document.documentElement.dataset.ciaoBenefitOverrideUntil=String(performance.now()+1100);
+      icons.forEach((candidate,i)=>candidate.classList.toggle('is-active',i===index));
+      if(window.__ciaoLenis?.scrollTo)window.__ciaoLenis.scrollTo(destination,{duration:.85,force:true,lock:false});
+      else if(window.__ciaoScrollToSection)window.__ciaoScrollToSection(index+2);
+      else window.scrollTo({top:destination,behavior:'smooth'});
+    },true);
+  }
+  let dragging=false,startX=0,accumulatedX=0,startIndex=0;
+  const canDrag=(target)=>{
+    const motion=document.documentElement.dataset.ciaoIntroMotion;
+    const stage=document.documentElement.dataset.copyStage;
+    const canvas=document.querySelector('canvas');
+    return motion==='complete' && (stage==='hero'||stage==='profile') && window.innerWidth>=1024 && window.__ciaoCarousel && target!==canvas;
+  };
+  const targetIsUi=(target)=>target instanceof Element && Boolean(target.closest('a,button,input,textarea,select,.navbar,.carousel_nav,.benefits_nav'));
+  document.addEventListener('pointerdown',(event)=>{
+    if(event.pointerType==='touch'||event.button!==0||targetIsUi(event.target)||!canDrag(event.target))return;
+    dragging=true;startX=event.clientX;accumulatedX=0;startIndex=Number(window.__ciaoCarousel?.index||0);
+    document.documentElement.dataset.ciaoDesktopDrag='active';
+  },true);
+  document.addEventListener('pointermove',(event)=>{
+    if(dragging)accumulatedX=event.clientX-startX;
+  },true);
+  const finish=()=>{
+    if(!dragging)return;
+    dragging=false;
+    const carousel=window.__ciaoCarousel;
+    if(carousel&&Math.abs(accumulatedX)>=44)carousel.goTo(startIndex+(accumulatedX<0?1:-1));
+    document.documentElement.dataset.ciaoDesktopDrag='complete';
+  };
+  document.addEventListener('pointerup',finish,true);
+  document.addEventListener('pointercancel',finish,true);
 })();
 </script>
 </body></html>
