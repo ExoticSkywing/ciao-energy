@@ -1486,6 +1486,9 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
     },
   );
   const finalComposer = new EffectComposer(renderer, finalRenderTarget);
+  // The injected target is already allocated in physical pixels; reset Composer's
+  // logical viewport before adding passes so DPR is applied exactly once.
+  finalComposer.setSize(window.innerWidth, window.innerHeight);
   finalComposer.addPass(renderPass);
   if (!lowPower) finalComposer.addPass(bloomPass);
   finalComposer.addPass(outputPass);
