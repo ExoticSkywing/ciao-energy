@@ -3,9 +3,8 @@
 ## 范围
 - 项目：`/root/.hermes/profiles/frontend/workspace/ciao-energy`
 - 目标站：`https://www.ciaoenergy.com`
-- 项目级提取器：`.claude/skills/perfect-web-clone`
-- 项目级 Playwright：`.venv` + `.playwright-browsers`
-- 未修改 Hermes、Camofox 或其他 Profile 的默认浏览器设置。
+- 历史上曾试用项目级通用提取器，现已移除；当前方法以 `web-clone` 的真源码/运行时证据流程为准。
+- 浏览器统一复用 Hermes 共享 Chromium 缓存；未在项目中保留浏览器副本。
 
 ## 构建验证
 命令：`npm run check`
