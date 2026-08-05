@@ -4537,7 +4537,7 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
   function canBridge(target){
     const stage=document.documentElement.dataset.copyStage;
     const swipe=window.__ciaoSwipe;
-    return (stage==='hero'||stage==='profile') && swipe && target!==canvas() && !targetIsUi(target);
+    return (stage==='hero'||stage==='profile'||stage==='argument'||stage==='full-gamme') && swipe?.active && target!==canvas() && !targetIsUi(target);
   }
   function finishCancelled(){
     if(!tracking)return;
@@ -4628,7 +4628,7 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
     const stage=document.documentElement.dataset.copyStage;
     const canvas=document.querySelector('canvas');
     const swipe=window.__ciaoSwipe;
-    return motion==='complete' && (stage==='hero'||stage==='profile') && window.__ciaoCarousel && swipe && target!==canvas;
+    return motion==='complete' && (stage==='hero'||stage==='profile'||stage==='argument'||stage==='full-gamme') && window.__ciaoCarousel && swipe?.active && target!==canvas;
   };
   const targetIsUi=(target)=>target instanceof Element && Boolean(target.closest('a,button,input,textarea,select,.navbar,.carousel_nav,.carousel_pagination,.benefits_nav'));
   const resetCancelled=()=>{
