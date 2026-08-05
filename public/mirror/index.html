@@ -2454,8 +2454,7 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
   // #region Swipe
 
   on(renderer.domElement, 'mousedown touchstart', (e) => {
-    const stage = document.documentElement.dataset.copyStage;
-    if (!swipe.active || pointer.prevent || (stage && stage !== 'hero' && stage !== 'profile' && stage !== 'intro')) return;
+    if (!swipe.active || pointer.prevent) return;
     swipe.holding = true;
     swipe.deltaX = 0;
     const x = e.touches ? e.touches[0].clientX : e.clientX;
@@ -4575,14 +4574,16 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
     const t=e.touches?.[0],swipe=window.__ciaoSwipe;
     if(!t||!swipe?.holding){finishCancelled();return;}
     const dx=t.clientX-lastX;
+    const dy=t.clientY-lastY;
     lastX=t.clientX;lastY=t.clientY;
     if(swipe.direction===0&&(Math.abs(t.clientX-swipe.startX)>2||Math.abs(t.clientY-swipe.startY)>2)){
-      swipe.direction=Math.abs(t.clientX-swipe.startX)>Math.abs(t.clientY-swipe.startY)?1:2;
+      // Match the source axis arbitration: decide from the current event delta,
+      // not total travel, so direction remains responsive on diagonal starts.
+      swipe.direction=Math.abs(dx)>Math.abs(dy)?1:2;
     }
     if(swipe.direction===1){
       swipe.lastX=t.clientX;swipe.lastY=t.clientY;
-      // Window's source listener runs before this document capture listener.
-      // It has already consumed dx while active; bridge only copy-layer input.
+      // Feed the official swipe delta directly for copy-layer input.
       swipe.deltaX+=dx;
       document.body.style.overflow='hidden';
       e.preventDefault();e.stopImmediatePropagation();
@@ -4678,15 +4679,30 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
     lastX=event.clientX;
     lastY=event.clientY;
     if(swipe.direction===0&&(Math.abs(event.clientX-swipe.startX)>2||Math.abs(event.clientY-swipe.startY)>2)){
-      swipe.direction=Math.abs(event.clientX-swipe.startX)>Math.abs(event.clientY-swipe.startY)?1:2;
+      // Match the source axis arbitration: decide from the current event delta,
+      // not total travel, so direction remains responsive on diagonal starts.
+      swipe.direction=Math.abs(dx)>Math.abs(dy)?1:2;
     }
     if(swipe.direction===1){
-      // The source window mousemove listener owns delta accumulation.
+      // Pointer events do not guarantee a compatibility mousemove on every
+      // browser/device. Feed the official swipe delta directly so the full
+      // lineup follows the held pointer continuously, exactly like the source
+      // canvas path. Compatibility mouse events are suppressed below while
+      // this bridge owns the gesture, avoiding duplicate accumulation.
+      swipe.lastX=event.clientX;
+      swipe.lastY=event.clientY;
+      swipe.deltaX+=dx;
+      window.__ciaoLenis?.stop();
       event.preventDefault();
     }else if(swipe.direction===2&&Math.abs(event.clientY-swipe.startY)>8){
       // A vertical gesture belongs to page navigation, not the carousel.
       resetCancelled();
     }
+  },true);
+  // While the pointer bridge owns a drag, block compatibility mousemove from
+  // reaching the source window owner; otherwise some browsers add dx twice.
+  document.addEventListener('mousemove',(event)=>{
+    if(dragging){event.preventDefault();event.stopImmediatePropagation();}
   },true);
   document.addEventListener('mouseup',finishNaturally,true);
   document.addEventListener('pointercancel',resetOnInterruption,true);
