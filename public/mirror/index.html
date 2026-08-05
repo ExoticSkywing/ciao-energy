@@ -1757,6 +1757,14 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
     get: () => swipeStageActive || document.documentElement.dataset.copyStage === 'profile',
     set: (value) => { swipeStageActive = Boolean(value); },
   });
+  const releaseSwipe = () => {
+    if (swipe.holding) swipe.deltaX *= 8;
+    swipe.holding = false;
+    swipe.direction = 0;
+    lenis.start();
+    document.body.style.overflow = '';
+  };
+  window.__ciaoReleaseSwipe = releaseSwipe;
   window.__ciaoSwipe = swipe;
 
   // #endregion Swipe State
@@ -2482,11 +2490,7 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
   on(window, 'mouseup touchend', (e) => {
     if (!swipe.holding) return;
     setTimeout(() => {
-      swipe.deltaX *= 8;
-      swipe.holding = false;
-      swipe.direction = 0;
-      lenis.start();
-      document.body.style.overflow = '';
+      releaseSwipe();
     });
   });
 
@@ -4539,20 +4543,22 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
     if(!tracking)return;
     tracking=false;
     const swipe=window.__ciaoSwipe;
-    if(swipe?.holding){swipe.deltaX*=8;swipe.holding=false;swipe.direction=0;}
+    if(swipe?.holding)window.__ciaoReleaseSwipe?.();
+    else window.__ciaoLenis?.start();
     document.body.style.overflow='';
   }
   function finishNaturally(){
     if(!tracking)return;
     tracking=false;
-    // The source owns window touchend and deliberately clears direction in a
-    // timer, after the compatibility click guard has observed the drag.
+    // Let the official window mouseup/touchend owner release on its existing
+    // zero-delay timer. This preserves the source pointerup → click guard order.
   }
   function resetOnInterruption(){
     if(tracking)finishCancelled();
     else {
       const swipe=window.__ciaoSwipe;
-      if(swipe?.holding){swipe.deltaX*=8;swipe.holding=false;swipe.direction=0;}
+      if(swipe?.holding)window.__ciaoReleaseSwipe?.();
+      else window.__ciaoLenis?.start();
       document.body.style.overflow='';
     }
   }
@@ -4629,12 +4635,8 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
     if(!dragging)return;
     dragging=false;
     const swipe=window.__ciaoSwipe;
-    if(swipe?.holding){
-      // Match the source release contract: preserve its final impulse, then snap.
-      swipe.deltaX*=8;
-      swipe.holding=false;
-      swipe.direction=0;
-    }
+    if(swipe?.holding)window.__ciaoReleaseSwipe?.();
+    else window.__ciaoLenis?.start();
     document.documentElement.dataset.ciaoDesktopDrag='complete';
     document.body.style.cursor='grab';
   };
@@ -4650,7 +4652,8 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
     if(dragging)resetCancelled();
     else {
       const swipe=window.__ciaoSwipe;
-      if(swipe?.holding){swipe.deltaX*=8;swipe.holding=false;swipe.direction=0;}
+      if(swipe?.holding)window.__ciaoReleaseSwipe?.();
+      else window.__ciaoLenis?.start();
       document.body.style.cursor='grab';
     }
   };

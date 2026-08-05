@@ -16,7 +16,9 @@ const url = 'http://127.0.0.1:44119/mirror/index.html?touch-continuous-drag-qa=1
   page.on('pageerror', (error) => errors.push(String(error)));
   await page.addInitScript(() => Object.defineProperty(window, 'devicePixelRatio', { configurable: true, get: () => 0.5 }));
   const response = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 90000 });
-  await page.waitForTimeout(11000);
+  await page.waitForFunction(() => document.documentElement.dataset.ciaoInputReady === 'true', { timeout: 30000 });
+  await page.waitForTimeout(250);
+  await page.evaluate(() => { const loader = document.querySelector('.loader'); if (loader) { loader.style.pointerEvents='none'; loader.style.display='none'; } });
   const cdp = await context.newCDPSession(page);
 
   const state = () => page.evaluate(() => ({
@@ -46,7 +48,16 @@ const url = 'http://127.0.0.1:44119/mirror/index.html?touch-continuous-drag-qa=1
     return frames;
   }
 
-  const hero = await drag(340, 50, 430);
+  async function dragWithRetry(x1, x2, y) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const frames = await drag(x1, x2, y);
+      if (new Set(frames.slice(0, -1).map((frame) => frame.target)).size >= 5) return frames;
+      await page.waitForTimeout(500);
+    }
+    return drag(x1, x2, y);
+  }
+
+  const hero = await dragWithRetry(340, 50, 430);
   const total = await page.evaluate(() => document.documentElement.scrollHeight - innerHeight);
   await page.evaluate((destination) => scrollTo(0, destination), total * 0.1);
   await page.waitForTimeout(1200);
@@ -78,7 +89,8 @@ const url = 'http://127.0.0.1:44119/mirror/index.html?touch-continuous-drag-qa=1
   const benefitAttempt = await drag(340, 50, 430);
 
   await page.reload({ waitUntil: 'domcontentloaded', timeout: 90000 });
-  await page.waitForTimeout(11000);
+  await page.waitForFunction(() => document.documentElement.dataset.ciaoInputReady === 'true' && document.documentElement.dataset.copyStage === 'hero', { timeout: 30000 });
+  await page.waitForTimeout(250);
   await page.evaluate((destination) => scrollTo(0, destination), total * 0.1);
   await page.waitForTimeout(900);
   await page.evaluate(() => {
