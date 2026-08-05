@@ -4529,7 +4529,7 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
   // source swipe state instead of issuing one discrete goTo() on touchend.
   let tracking=false,lastX=0,lastY=0;
   const canvas=()=>document.querySelector('canvas');
-  const targetIsUi=(target)=>target instanceof Element && Boolean(target.closest('a,button,input,textarea,select,.navbar,.carousel_nav,.benefits_nav'));
+  const targetIsUi=(target)=>target instanceof Element && Boolean(target.closest('a,button,input,textarea,select,.navbar,.carousel_nav,.carousel_pagination,.benefits_nav'));
   function canBridge(target){
     const stage=document.documentElement.dataset.copyStage;
     const swipe=window.__ciaoSwipe;
@@ -4624,7 +4624,7 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
     const swipe=window.__ciaoSwipe;
     return motion==='complete' && (stage==='hero'||stage==='profile') && window.__ciaoCarousel && swipe && target!==canvas;
   };
-  const targetIsUi=(target)=>target instanceof Element && Boolean(target.closest('a,button,input,textarea,select,.navbar,.carousel_nav,.benefits_nav'));
+  const targetIsUi=(target)=>target instanceof Element && Boolean(target.closest('a,button,input,textarea,select,.navbar,.carousel_nav,.carousel_pagination,.benefits_nav'));
   const resetCancelled=()=>{
     if(!dragging)return;
     dragging=false;
