@@ -49,7 +49,7 @@ function Header({ open, onToggle }: { open: boolean; onToggle: () => void }) {
       <a href="#gamme" className="logo-link" aria-label="Ciao Energy — accueil"><Image src="/assets/logo.svg" alt="Ciao Energy" width={150} height={60} priority /></a>
       <button className={`menu-button ${open ? "open" : ""}`} type="button" onClick={onToggle} aria-expanded={open} aria-controls="site-menu"><span className="menu-grid">••<br />••</span><span>{open ? "FERMER" : "MENU"}</span></button>
       <nav id="site-menu" className={`menu-panel ${open ? "open" : ""}`} aria-hidden={!open}>
-        <a href="#gamme">Gamme</a><a href="#benefices">Bénéfices</a><a href="#FAQ">FAQ</a><a href="#newsletter">Newsletter</a><a href="mailto:contact@ciaoenergy.com">Contact</a>
+        <a href="#gamme">Gamme</a><a href="#benefices">Bénéfices</a><a href="#FAQ">FAQ</a><a href="#newsletter">Newsletter</a><a href="mailto:contact@ciao.ysl.monster">Contact</a>
       </nav>
     </header>
   );

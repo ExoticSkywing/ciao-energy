@@ -1,7 +1,7 @@
 export default function Page() {
   return (
     <iframe
-      src="/mirror/index.html?v=continuous-carousel-drag-10"
+      src="/mirror/?v=continuous-carousel-drag-10"
       title="Ciao Energy"
       style={{
         position: "fixed",
