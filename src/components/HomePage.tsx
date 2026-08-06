@@ -145,7 +145,7 @@ export default function HomePage() {
         <p className="form-note" role="status">{emailState === "done" ? "Mode démonstration : aucune donnée n’a été envoyée." : "En vous inscrivant vous acceptez notre politique de confidentialité."}</p>
       </section>
 
-      <footer><p>© 2026 CIAO ENERGY — BY SKAALD</p><div><a href="https://www.tiktok.com/@ciaoenergy">TIKTOK</a><a href="/mentions-legales">MENTIONS LÉGALES</a><a href="/cgu">CGU</a><a href="/politique-de-confidentialite">POLITIQUE DE CONFIDENTIALITÉ</a><a href="https://www.instagram.com/ciaoenergy">INSTAGRAM</a></div></footer>
+      <footer><p>© 2026 CIAO ENERGY — BY SKAALD</p><div><a href="ciaoyslmonster">TIKTOK</a><a href="/mentions-legales">MENTIONS LÉGALES</a><a href="/cgu">CGU</a><a href="/politique-de-confidentialite">POLITIQUE DE CONFIDENTIALITÉ</a><a href="ciaoyslmonster">INSTAGRAM</a></div></footer>
     </main>
   );
 }
