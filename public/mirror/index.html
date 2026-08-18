@@ -1697,16 +1697,7 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
   const iphoneMvpWorlds = iphoneMvpActors.map(() => new THREE.Vector3());
   const iphoneMvpProjected = new THREE.Vector3();
   const iphoneMvpWorldScale = new THREE.Vector3();
-  let iphoneMvpLatchedSlot = iphoneMvpSlot;
   const updateIphoneMvpSprite = () => {
-    const heroEnd = section.items[0]?.height || window.innerHeight;
-    const heroOwned = scroll.position < heroEnd * 0.62;
-    if (heroOwned) {
-      const centerSource = iphoneMvpActors
-        .map((actor, slot) => ({ slot, distance: Math.abs(actor.position.x) }))
-        .sort((a, b) => a.distance - b.distance)[0];
-      if (centerSource && Math.abs(carousel.position - carousel.target) < 0.35) iphoneMvpLatchedSlot = centerSource.slot;
-    }
     iphoneMvpActors.forEach((actor, slot) => {
       const sprite = iphoneMvpSprites[slot];
       const world = iphoneMvpWorlds[slot];
@@ -1714,11 +1705,7 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
       actor.getWorldPosition(world);
       iphoneMvpProjected.copy(world).project(camera);
       actor.getWorldScale(iphoneMvpWorldScale);
-      const visible = !heroOwned
-        ? slot === iphoneMvpLatchedSlot
-        : (window.innerWidth < 1024
-          ? iphoneMvpProjected.z < 1
-          : (Math.abs(iphoneMvpProjected.x) < 1.25 && Math.abs(iphoneMvpProjected.y) < 1.35 && iphoneMvpProjected.z < 1));
+      const visible = slot === iphoneMvpSlot || (Math.abs(iphoneMvpProjected.x) < 1.35 && Math.abs(iphoneMvpProjected.y) < 1.4 && iphoneMvpProjected.z < 1);
       if (!visible) {
         sprite.style.opacity = '0';
         return;
@@ -1728,13 +1715,12 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
       const verticalFov = THREE.MathUtils.degToRad(camera.fov);
       const distance = Math.max(camera.position.distanceTo(world), 0.01);
       const pixelsPerWorldUnit = window.innerHeight / (2 * Math.tan(verticalFov * 0.5) * distance);
-      const isCenter = !heroOwned || Math.abs(actor.position.x) < carousel.spacing * 0.48;
+      const isCenter = Math.abs(actor.position.x - data.canPosX) < carousel.spacing * 0.48;
       const height = iphoneMvpHeight * iphoneMvpWorldScale.y * pixelsPerWorldUnit * 1.098 * (isCenter ? 1 : 0.82);
       const width = height * iphoneMvpAspect;
-      const sideInset = window.innerWidth < 1024 ? window.innerWidth * 0.23 : 0;
-      const displayCenterX = !heroOwned
+      const displayCenterX = slot === iphoneMvpSlot && Math.abs(iphoneMvpProjected.x) >= 1.35
         ? window.innerWidth * 0.5
-        : (isCenter ? centerX : centerX + (actor.position.x < 0 ? sideInset : -sideInset));
+        : centerX;
       sprite.style.left = `${displayCenterX - width * 0.5}px`;
       sprite.style.top = `${centerY - height * 0.5}px`;
       sprite.style.width = `${width}px`;
@@ -1754,8 +1740,6 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
       iphoneActorCount: cans.filter((actor) => actor.userData.productType === 'iphone-mvp').length,
       canActorCount: cans.filter((actor) => actor.userData.productType !== 'iphone-mvp').length,
       legacyCanSceneCount: 0,
-      latchedSlot: iphoneMvpLatchedSlot,
-      heroOwned: scroll.position < (section.items[0]?.height || window.innerHeight) * 0.62,
       position: iphoneMvpActor.position.toArray(),
       rotation: [iphoneMvpActor.rotation.x, iphoneMvpActor.rotation.y, iphoneMvpActor.rotation.z],
       scale: iphoneMvpActor.scale.toArray(),
@@ -2326,8 +2310,8 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
       },
     });
 
-    carousel.target = carousel.offset;
-    carousel.position = carousel.offset;
+    carousel.target = 0;
+    carousel.position = 0;
 
     tl.set(data, {
       camPosZ: 25,
@@ -2485,9 +2469,10 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
       }
     }
 
-    const minX = -carousel.spacing * 1.5;
-    const maxX = carousel.spacing * 1.5;
+    const minX = cans.length * -0.5 * carousel.spacing;
+    const maxX = cans.length * 0.5 * carousel.spacing;
     const size = maxX - minX;
+    const iphoneMvpStartShift = carousel.spacing * iphoneMvpSlot;
 
     carousel.target -= swipe.deltaX * 0.02 * data.swipeSpeed;
     swipe.deltaX = 0;
@@ -2520,19 +2505,14 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
     const wave = windowRatio * 0.25 * (1 - p0) * data.wave;
 
     cans.forEach((can, i) => {
-      var target = (i - iphoneMvpSlot) * carousel.spacing - carousel.position;
-      const x = cans.length === 3
-        ? (i - iphoneMvpSlot - carousel.position / carousel.spacing) * carousel.spacing
-        : wrap(target, minX, maxX);
+      var target = i * carousel.spacing - carousel.position + iphoneMvpStartShift;
+      const x = wrap(target, minX, maxX);
 
       // Carousel
       let p = clamp(1 - Math.abs(x) / carousel.spacing, 0, 1);
       const p1 = Math.min(p, p0);
       let canScale = 1.2;
       let canPosX = x * data.spacing;
-      if (cans.length === 3 && Math.abs(carousel.position) < 0.01) {
-        canPosX = x;
-      }
       let canPosY = Math.sin(canPosX * wave);
       let canPosZ = (Math.abs(x) * -1 - 0.2) * data.wave;
       let canRotX = (-Math.PI / 180) * 20 * data.wave;
