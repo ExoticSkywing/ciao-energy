@@ -1637,10 +1637,10 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
   scene.remove(replacedCan);
   scene.add(iphoneMvpActor);
   cans[iphoneMvpSlot] = iphoneMvpActor;
-  const iphoneMvpSprite = document.createElement('img');
-  iphoneMvpSprite.src = '/mirror/media/iphone-actor-mvp/iphone-17-pro-ciao-mvp.png';
-  iphoneMvpSprite.alt = '';
+  const iphoneMvpSprite = document.createElement('div');
   iphoneMvpSprite.setAttribute('aria-hidden', 'true');
+  const iphoneMvpScreen = document.createElement('img');
+  iphoneMvpScreen.src = '/mirror/media/iphone-actor-mvp/premium-prism-wallpaper.jpg';
   Object.assign(iphoneMvpSprite.style, {
     position: 'fixed',
     left: '0',
@@ -1650,10 +1650,30 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
     zIndex: '2147483645',
     pointerEvents: 'none',
     userSelect: 'none',
-    transformOrigin: '50% 50%',
-    opacity: '0',
-    willChange: 'left, top, width, height, transform, opacity',
+    willChange: 'left, top, width, height, opacity',
   });
+  Object.assign(iphoneMvpScreen.style, {
+    position: 'absolute',
+    left: `${(72 / 1350) * 100}%`,
+    top: `${(69 / 2760) * 100}%`,
+    width: `${(1206 / 1350) * 100}%`,
+    height: `${(2622 / 2760) * 100}%`,
+    objectFit: 'cover',
+    objectPosition: '50% 58%',
+    borderRadius: '10%',
+  });
+  const iphoneMvpBezel = document.createElement('img');
+  iphoneMvpBezel.src = '/mirror/media/iphone-actor-mvp/iphone-17-pro-official-bezel.png';
+  iphoneMvpBezel.alt = '';
+  Object.assign(iphoneMvpBezel.style, {
+    position: 'absolute',
+    inset: '0',
+    width: '100%',
+    height: '100%',
+    pointerEvents: 'none',
+    userSelect: 'none',
+  });
+  iphoneMvpSprite.append(iphoneMvpScreen, iphoneMvpBezel);
   document.body.appendChild(iphoneMvpSprite);
   const iphoneMvpWorld = new THREE.Vector3();
   const iphoneMvpProjected = new THREE.Vector3();
@@ -1673,13 +1693,12 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
     const verticalFov = THREE.MathUtils.degToRad(camera.fov);
     const distance = Math.max(camera.position.distanceTo(iphoneMvpWorld), 0.01);
     const pixelsPerWorldUnit = window.innerHeight / (2 * Math.tan(verticalFov * 0.5) * distance);
-    const height = iphoneMvpHeight * iphoneMvpWorldScale.y * pixelsPerWorldUnit * 1.22;
+    const height = iphoneMvpHeight * iphoneMvpWorldScale.y * pixelsPerWorldUnit * 0.61;
     const width = height * iphoneMvpAspect;
     iphoneMvpSprite.style.left = `${centerX - width * 0.5}px`;
     iphoneMvpSprite.style.top = `${centerY - height * 0.5}px`;
     iphoneMvpSprite.style.width = `${width}px`;
     iphoneMvpSprite.style.height = `${height}px`;
-    iphoneMvpSprite.style.transform = `rotate(${THREE.MathUtils.radToDeg(iphoneMvpActor.rotation.z)}deg)`;
     iphoneMvpSprite.style.opacity = '1';
   };
   window.__ciaoIPhoneActorMvp = {
