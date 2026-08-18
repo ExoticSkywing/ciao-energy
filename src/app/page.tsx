@@ -1,7 +1,7 @@
 export default function Page() {
   return (
     <iframe
-      src="/mirror/?v=continuous-carousel-drag-10"
+      src="/mirror/?v=iphone-mvp-prism-single-bezel-half-upright-v1"
       title="Ciao Energy"
       style={{
         position: "fixed",
