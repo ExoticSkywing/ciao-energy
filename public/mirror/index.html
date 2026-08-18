@@ -237,13 +237,41 @@
 .local-intro-percent{position:absolute;left:50%;bottom:max(2rem,env(safe-area-inset-bottom));transform:tr...[truncated]
 @keyframes local-intro-layer-out{to{opacity:0;visibility:hidden;pointer-events:none}}
 </style>
+<script>
+(() => {
+  const bootAt = performance.now();
+  const release = () => {
+    const ready = document.documentElement.dataset.ciaoSceneReady === 'true';
+    const video = document.querySelector('.loader_video');
+    const mediaDone = !video || video.ended || (Number.isFinite(video.duration) && video.duration > 0 && video.currentTime >= video.duration - 0.05);
+    const timedOut = performance.now() - bootAt >= 12000;
+    if (!ready || (!mediaDone && !timedOut)) return false;
+    const percent = document.querySelector('.loader_percent');
+    if (percent) percent.textContent = '100%';
+    document.querySelectorAll('.loader').forEach((element) => {
+      element.style.setProperty('display', 'none', 'important');
+      element.style.setProperty('visibility', 'hidden', 'important');
+      element.style.setProperty('pointer-events', 'none', 'important');
+    });
+    document.documentElement.dataset.ciaoIntroMotion = 'complete';
+    document.documentElement.style.overflow = '';
+    document.body.style.overflow = '';
+    window.__ciaoLoader?.skip?.().catch?.(() => {});
+    window.dispatchEvent(new Event('resize'));
+    return true;
+  };
+  const timer = setInterval(() => {
+    if (release()) clearInterval(timer);
+  }, 100);
+  window.addEventListener('ciao:scene-ready', release);
+  window.addEventListener('pageshow', release);
+})();
+</script>
 
 <style>
-@media (max-width:1023px){
   html[data-ciao-intro-motion="complete"] .navbar{opacity:1!important;visibility:visible!important;transform:none!important}
   html[data-ciao-intro-motion="complete"] .navbar_sound,html[data-ciao-intro-motion="complete"] .navbar_logo-link,html[data-ciao-intro-motion="complete"] .navbar_menu-wrapper{opacity:1!important;visibility:visible!important}
   html[data-ciao-intro-motion="complete"] .hud{display:block!important;opacity:1!important;visibility:visible!important}
-}
 </style>
 
 <style>
