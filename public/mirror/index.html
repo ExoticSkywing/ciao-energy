@@ -1616,6 +1616,98 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
     }
   });
 
+  // MVP: replace only the initial center can with the verified Action Button iPhone shell.
+  // The transparent proxy remains inside Ciao's original cans[] loop; a DOM sprite only
+  // paints the verified RGBA hardware so the experiment cannot be invalidated by Ciao's
+  // post-processing pipeline.
+  const iphoneMvpAspect = 1350 / 2760;
+  const iphoneMvpHeight = 4.25;
+  const iphoneMvpActor = new THREE.Group();
+  const iphoneMvpHit = new THREE.Mesh(
+    new THREE.BoxGeometry(iphoneMvpHeight * iphoneMvpAspect, iphoneMvpHeight, 0.2),
+    new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }),
+  );
+  iphoneMvpHit.name = 'IPhoneActorMvpHit';
+  iphoneMvpActor.name = 'IPhoneActorMvp';
+  iphoneMvpActor.userData.productType = 'iphone-mvp';
+  iphoneMvpActor.userData.preventInnerSpin = true;
+  iphoneMvpActor.add(iphoneMvpHit);
+  const iphoneMvpSlot = Math.floor(cans.length / 2);
+  const replacedCan = cans[iphoneMvpSlot];
+  scene.remove(replacedCan);
+  scene.add(iphoneMvpActor);
+  cans[iphoneMvpSlot] = iphoneMvpActor;
+  const iphoneMvpSprite = document.createElement('img');
+  iphoneMvpSprite.src = '/mirror/media/iphone-actor-mvp/iphone-17-pro-ciao-mvp.png';
+  iphoneMvpSprite.alt = '';
+  iphoneMvpSprite.setAttribute('aria-hidden', 'true');
+  Object.assign(iphoneMvpSprite.style, {
+    position: 'fixed',
+    left: '0',
+    top: '0',
+    width: '1px',
+    height: '1px',
+    zIndex: '2147483645',
+    pointerEvents: 'none',
+    userSelect: 'none',
+    transformOrigin: '50% 50%',
+    opacity: '0',
+    willChange: 'left, top, width, height, transform, opacity',
+  });
+  document.body.appendChild(iphoneMvpSprite);
+  const iphoneMvpWorld = new THREE.Vector3();
+  const iphoneMvpProjected = new THREE.Vector3();
+  const iphoneMvpWorldScale = new THREE.Vector3();
+  const updateIphoneMvpSprite = () => {
+    iphoneMvpActor.updateWorldMatrix(true, false);
+    iphoneMvpActor.getWorldPosition(iphoneMvpWorld);
+    iphoneMvpProjected.copy(iphoneMvpWorld).project(camera);
+    iphoneMvpActor.getWorldScale(iphoneMvpWorldScale);
+    const visible = Math.abs(iphoneMvpProjected.x) < 1.25 && Math.abs(iphoneMvpProjected.y) < 1.35 && iphoneMvpProjected.z < 1;
+    if (!visible) {
+      iphoneMvpSprite.style.opacity = '0';
+      return;
+    }
+    const centerX = (iphoneMvpProjected.x * 0.5 + 0.5) * window.innerWidth;
+    const centerY = (-iphoneMvpProjected.y * 0.5 + 0.5) * window.innerHeight;
+    const verticalFov = THREE.MathUtils.degToRad(camera.fov);
+    const distance = Math.max(camera.position.distanceTo(iphoneMvpWorld), 0.01);
+    const pixelsPerWorldUnit = window.innerHeight / (2 * Math.tan(verticalFov * 0.5) * distance);
+    const height = iphoneMvpHeight * iphoneMvpWorldScale.y * pixelsPerWorldUnit * 1.22;
+    const width = height * iphoneMvpAspect;
+    iphoneMvpSprite.style.left = `${centerX - width * 0.5}px`;
+    iphoneMvpSprite.style.top = `${centerY - height * 0.5}px`;
+    iphoneMvpSprite.style.width = `${width}px`;
+    iphoneMvpSprite.style.height = `${height}px`;
+    iphoneMvpSprite.style.transform = `rotate(${THREE.MathUtils.radToDeg(iphoneMvpActor.rotation.z)}deg)`;
+    iphoneMvpSprite.style.opacity = '1';
+  };
+  window.__ciaoIPhoneActorMvp = {
+    actor: iphoneMvpActor,
+    cans,
+    carousel,
+    slot: iphoneMvpSlot,
+    replacedOnly: 1,
+    diagnostics: () => ({
+      slot: iphoneMvpSlot,
+      actorCount: cans.length,
+      iphoneActorCount: cans.filter((actor) => actor.userData.productType === 'iphone-mvp').length,
+      canActorCount: cans.filter((actor) => actor.userData.productType !== 'iphone-mvp').length,
+      position: iphoneMvpActor.position.toArray(),
+      rotation: [iphoneMvpActor.rotation.x, iphoneMvpActor.rotation.y, iphoneMvpActor.rotation.z],
+      scale: iphoneMvpActor.scale.toArray(),
+      sprite: {
+        opacity: iphoneMvpSprite.style.opacity,
+        left: iphoneMvpSprite.style.left,
+        top: iphoneMvpSprite.style.top,
+        width: iphoneMvpSprite.style.width,
+        height: iphoneMvpSprite.style.height,
+      },
+    }),
+  };
+  document.documentElement.dataset.iphoneActorMvp = 'ready';
+  document.documentElement.dataset.iphoneActorMvpSlot = String(iphoneMvpSlot);
+
   // #endregion Cans
   // #region Raycaster
 
@@ -2227,6 +2319,22 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
     loader.ended.emit();
   };
 
+  loader.skip = async () => {
+    loader.timeline?.progress(1);
+    loader.complete = true;
+    document.documentElement.dataset.ciaoIntroMotion = 'complete';
+    lenis.start();
+    document.documentElement.style.overflow = '';
+    document.body.style.overflow = '';
+    pointer.prevent = false;
+    swipe.active = true;
+    animation.paused = false;
+    document.querySelectorAll('.loader').forEach((element) => {
+      element.style.setProperty('display', 'none', 'important');
+      element.style.setProperty('pointer-events', 'none', 'important');
+    });
+  };
+
   // #endregion Loader
   // #region Animation
 
@@ -2374,9 +2482,9 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
       can.rotation.y += (pointer.smoothX / 1280) * data.pointerInfluence * p;
       can.rotation.x += (pointer.smoothY / 1280) * data.pointerInfluence * p;
 
-      can.material = canMaterial;
+      if (can.material !== undefined) can.material = canMaterial;
 
-      can.children.forEach((child, i) => {
+      if (!can.userData.preventInnerSpin) can.children.forEach((child, i) => {
         if (child.isMesh) {
           child.rotation.z = can.rotation.y * 0.6 + data.canSpin * p;
         }
@@ -2393,6 +2501,8 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
     camera.rotation.x = data.camRotX;
     camera.rotation.y = data.camRotY;
     camera.rotation.z = data.camRotZ;
+    camera.updateMatrixWorld(true);
+    updateIphoneMvpSprite();
 
     spot1.intensity = data.lightIntensity;
     spot1.angle = (Math.PI / 4) * data.lightWidth;
