@@ -1735,7 +1735,7 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
       const isCenter = !heroOwned || Math.abs(actor.position.x) < carousel.spacing * 0.48;
       const height = !heroOwned && slot === iphoneMvpLatchedSlot
         ? Math.min(window.innerHeight * 0.58, window.innerWidth * 1.18)
-        : iphoneMvpHeight * iphoneMvpWorldScale.y * pixelsPerWorldUnit * 1.098...[truncated]
+        : iphoneMvpHeight * iphoneMvpWorldScale.y * pixelsPerWorldUnit * 1.098 * (isCenter ? 1 : 0.82);
       const width = height * iphoneMvpAspect;
       const sideInset = window.innerWidth < 1024 ? window.innerWidth * 0.23 : 0;
       const displayCenterX = !heroOwned
@@ -3040,13 +3040,51 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
       };
       updatePercent();
 
+      const releaseLoaderWithoutGsap = () => {
+        if (entered || window.gsap) return false;
+        if (!sceneReady && document.documentElement.dataset.ciaoSceneReady === 'true') sceneReady = true;
+        if (!sceneReady) return false;
+        videoEnded = true;
+        percentObj.value = 100;
+        updatePercent();
+        loaderEl.style.display = 'none';
+        loaderEl.style.visibility = 'hidden';
+        loaderEl.style.pointerEvents = 'none';
+        document.documentElement.dataset.ciaoIntroMotion = 'complete';
+        document.documentElement.style.overflow = '';
+        document.body.style.overflow = '';
+        entered = true;
+        window.__ciaoLoader?.skip?.().catch?.(() => {});
+        return true;
+      };
+
       const enterScene = async (force = false) => {
         if (entered || (!force && (!videoEnded || !sceneReady))) return;
         if (force) {
           sceneReady = true;
           videoEnded = true;
         }
-        entered = tr...[truncated]
+        entered = true;
+
+        const finishWithoutGsap = async () => {
+          percentObj.value = 100;
+          updatePercent();
+          loaderEl.style.display = 'none';
+          loaderEl.style.visibility = 'hidden';
+          loaderEl.style.pointerEvents = 'none';
+          document.documentElement.dataset.ciaoIntroMotion = 'complete';
+          document.documentElement.style.overflow = '';
+          document.body.style.overflow = '';
+          try {
+            await window.__ciaoLoader?.skip?.();
+          } catch (error) {
+            console.warn('Loader runtime fallback released without GSAP', error);
+          }
+        };
+        if (!window.gsap) {
+          await finishWithoutGsap();
+          return;
+        }
 
         gsap.killTweensOf(percentObj);
         gsap.to(percentObj, {
@@ -3099,6 +3137,7 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
       const onSceneReady = () => {
         if (sceneReady) return;
         sceneReady = true;
+        if (releaseLoaderWithoutGsap()) return;
         enterScene();
       };
       window.addEventListener('ciao:scene-ready', onSceneReady);
@@ -3110,8 +3149,19 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
         }
       }, 50);
       if (document.documentElement.dataset.ciaoSceneReady === 'true') onSceneReady();
+      setTimeout(() => {
+        if (document.documentElement.dataset.ciaoSceneReady === 'true' && !window.gsap) {
+          sceneReady = true;
+          releaseLoaderWithoutGsap();
+        }
+      }, 0);
 
       const startFakePercent = () => {
+        if (!window.gsap) {
+          percentObj.value = 90;
+          updatePercent();
+          return;
+        }
         gsap.to(percentObj, {
           value: 90,
           duration: 8,
@@ -3120,6 +3170,7 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
         });
       };
 
+      let videoStarted = false;
       let lastProgressAt = performance.now();
       let lastMediaTime = 0;
       if (loaderVideo) {
@@ -3127,7 +3178,6 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
         loaderVideo.playsInline = true;
         loaderVideo.loop = false;
 
-        let videoStarted = false;
         const videoTimeout = setTimeout(() => {
           if (!videoStarted && !videoEnded) {
             videoEnded = true;
@@ -3146,7 +3196,7 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
             lastMediaTime = loaderVideo.currentTime;
             lastProgressAt = performance.now();
           }
-          const d = loa...[truncated]
+          const d = loaderVideo.duration;
           if (!d || !isFinite(d)) return;
           const target = Math.min((loaderVideo.currentTime / d) * 99, 99);
           if (target > percentObj.value) {
@@ -3161,6 +3211,10 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
           updatePercent();
           if (document.documentElement.dataset.ciaoSceneReady === 'true') {
             sceneReady = true;
+          }
+          if (sceneReady && !window.gsap) {
+            releaseLoaderWithoutGsap();
+            return;
           }
           enterScene();
         };
@@ -3191,10 +3245,15 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
 
       const loaderSafety = setInterval(() => {
         if (entered) return clearInterval(loaderSafety);
+        if (releaseLoaderWithoutGsap()) {
+          clearInterval(loaderSafety);
+          return;
+        }
         const ready = document.documentElement.dataset.ciaoSceneReady === 'true';
         const stalled = videoStarted && performance.now() - lastProgressAt > 3500;
         const hardTimeout = performance.now() - lastProgressAt > 12000;
-  ...[truncated]
+        if ((ready && (loaderVideo?.ended || stalled)) || (!loaderVideo && ready) || hardTimeout) {
+          enterScene(hardTimeout);
           clearInterval(loaderSafety);
         }
       }, 100);
@@ -4417,7 +4476,36 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
       });
     }
   });
-</script></div></div><script src="https://d3e54v103j8qbb.cloudfront.net/js/jquery-3.5.1.min.dc5e7f18c8.js?site=69fb53371d5b8e9c3f4e4c69" type="text/javascript" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script><script src="/mirror/vendor/cdn.prod.website-files.com/69fb53371d5b8e9c3f4e4c69/js/webflow.9a82b613.73a332445d881a7c.js" type="text/javascript" integrity="sha384-Qj49UiiHcRmgv+dIqC3k0D2nvEIgr4GRFcPdQjGtNfAYoqXVVMsTW5mIxDIgNHdC" crossorigin="anonymous"></script><script>
+</script></div>
+<script>
+(() => {
+  const startedAt = performance.now();
+  const release = () => {
+    const ready = document.documentElement.dataset.ciaoSceneReady === 'true';
+    const video = document.querySelector('.loader_video');
+    const mediaDone = !video || video.ended || (Number.isFinite(video.duration) && video.duration > 0 && video.currentTime >= video.duration - 0.05);
+    if (!ready || (!mediaDone && performance.now() - startedAt < 12000)) return false;
+    const percent = document.querySelector('.loader_percent');
+    if (percent) percent.textContent = '100%';
+    document.querySelectorAll('.loader').forEach((element) => {
+      element.style.setProperty('display', 'none', 'important');
+      element.style.setProperty('visibility', 'hidden', 'important');
+      element.style.setProperty('pointer-events', 'none', 'important');
+    });
+    document.documentElement.dataset.ciaoIntroMotion = 'complete';
+    document.documentElement.style.overflow = '';
+    document.body.style.overflow = '';
+    window.__ciaoLoader?.skip?.().catch?.(() => {});
+    window.dispatchEvent(new Event('resize'));
+    return true;
+  };
+  const timer = setInterval(() => {
+    if (release()) clearInterval(timer);
+  }, 100);
+  window.addEventListener('ciao:scene-ready', release, { once: true });
+})();
+</script>
+</div><script src="https://d3e54v103j8qbb.cloudfront.net/js/jquery-3.5.1.min.dc5e7f18c8.js?site=69fb53371d5b8e9c3f4e4c69" type="text/javascript" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script><script src="/mirror/vendor/cdn.prod.website-files.com/69fb53371d5b8e9c3f4e4c69/js/webflow.9a82b613.73a332445d881a7c.js" type="text/javascript" integrity="sha384-Qj49UiiHcRmgv+dIqC3k0D2nvEIgr4GRFcPdQjGtNfAYoqXVVMsTW5mIxDIgNHdC" crossorigin="anonymous"></script><script>
 /*!
  * GSAP 3.15.0
  * https://gsap.com
