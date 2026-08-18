@@ -1639,6 +1639,14 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
   carousel.position = 0;
   carousel.lastPosition = 0;
   carousel.offset = 0;
+  carousel.getIndex = (wrapped = true) => {
+    const raw = Math.round(carousel.position / carousel.spacing);
+    return wrapped ? ((raw % 3) + 3) % 3 : raw;
+  };
+  carousel.getRounded = () => Math.round(carousel.target / carousel.spacing) * carousel.spacing;
+  carousel.goTo = (index) => {
+    carousel.target = index * carousel.spacing;
+  };
   const iphoneMvpActors = [0, 1, 2].map((slot) => {
     const actor = slot === iphoneMvpSlot ? iphoneMvpActor : new THREE.Group();
     if (slot !== iphoneMvpSlot) {
@@ -1709,11 +1717,11 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
       const verticalFov = THREE.MathUtils.degToRad(camera.fov);
       const distance = Math.max(camera.position.distanceTo(world), 0.01);
       const pixelsPerWorldUnit = window.innerHeight / (2 * Math.tan(verticalFov * 0.5) * distance);
-      const isCenter = slot === iphoneMvpSlot;
+      const isCenter = Math.abs(actor.position.x) < carousel.spacing * 0.48;
       const height = iphoneMvpHeight * iphoneMvpWorldScale.y * pixelsPerWorldUnit * 1.098 * (isCenter ? 1 : 0.82);
       const width = height * iphoneMvpAspect;
       const sideInset = window.innerWidth < 1024 ? window.innerWidth * 0.23 : 0;
-      const displayCenterX = isCenter ? centerX : centerX + (slot < iphoneMvpSlot ? sideInset : -sideInset);
+      const displayCenterX = isCenter ? centerX : centerX + (actor.position.x < 0 ? sideInset : -sideInset);
       sprite.style.left = `${displayCenterX - width * 0.5}px`;
       sprite.style.top = `${centerY - height * 0.5}px`;
       sprite.style.width = `${width}px`;
@@ -1755,6 +1763,11 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
   };
   document.documentElement.dataset.iphoneActorMvp = 'ready';
   document.documentElement.dataset.iphoneActorMvpSlot = String(iphoneMvpSlot);
+  document.querySelectorAll('.carousel_arrow').forEach((arrow) => {
+    arrow.style.setProperty('visibility', 'visible', 'important');
+    arrow.style.setProperty('opacity', '1', 'important');
+    arrow.style.setProperty('pointer-events', 'auto', 'important');
+  });
 
   // #endregion Cans
   // #region Raycaster
@@ -2457,19 +2470,12 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
       }
     }
 
-    const minX = cans.length === 1 ? -carousel.spacing : cans.length * -0.5 * carousel.spacing;
-    const maxX = cans.length === 1 ? carousel.spacing : cans.length * 0.5 * carousel.spacing;
+    const minX = -carousel.spacing * 1.5;
+    const maxX = carousel.spacing * 1.5;
     const size = maxX - minX;
 
-    if (cans.length === 1) {
-      carousel.target = 0;
-      carousel.position = 0;
-      swipe.deltaX = 0;
-    } else {
-      carousel.target = 0;
-      carousel.position = 0;
-      swipe.deltaX = 0;
-    }
+    carousel.target -= swipe.deltaX * 0.02 * data.swipeSpeed;
+    swipe.deltaX = 0;
 
     // Pointer smoothing
     pointer.smoothX = lerp(pointer.smoothX, pointer.x, delta * 10);
@@ -2491,11 +2497,6 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
     }
     carousel.index = index;
 
-    carousel.target = 0;
-    carousel.position = 0;
-    carousel.lastPosition = 0;
-    carousel.offset = 0;
-
     const p0 = clamp(scroll.distanceTo(0) / section.items[0].height, 0, 1);
     timeline.seek(scroll.position / lenis.dimensions.scrollHeight);
 
@@ -2504,14 +2505,19 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
     const wave = windowRatio * 0.25 * (1 - p0) * data.wave;
 
     cans.forEach((can, i) => {
-      var target = (i - iphoneMvpSlot) * carousel.spacing;
-      const x = target;
+      var target = (i - iphoneMvpSlot) * carousel.spacing - carousel.position;
+      const x = cans.length === 3
+        ? (i - iphoneMvpSlot - carousel.position / carousel.spacing) * carousel.spacing
+        : wrap(target, minX, maxX);
 
       // Carousel
       let p = clamp(1 - Math.abs(x) / carousel.spacing, 0, 1);
       const p1 = Math.min(p, p0);
       let canScale = 1.2;
       let canPosX = x * data.spacing;
+      if (cans.length === 3 && Math.abs(carousel.position) < 0.01) {
+        canPosX = x;
+      }
       let canPosY = Math.sin(canPosX * wave);
       let canPosZ = (Math.abs(x) * -1 - 0.2) * data.wave;
       let canRotX = (-Math.PI / 180) * 20 * data.wave;
