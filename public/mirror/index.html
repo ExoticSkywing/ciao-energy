@@ -1632,11 +1632,15 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
   iphoneMvpActor.userData.productType = 'iphone-mvp';
   iphoneMvpActor.userData.preventInnerSpin = true;
   iphoneMvpActor.add(iphoneMvpHit);
-  const iphoneMvpSlot = Math.floor(cans.length / 2);
-  const replacedCan = cans[iphoneMvpSlot];
-  scene.remove(replacedCan);
+  const iphoneMvpSlot = 0;
+  cans.forEach((can) => scene.remove(can));
+  cans.length = 0;
+  carousel.target = 0;
+  carousel.position = 0;
+  carousel.lastPosition = 0;
+  carousel.offset = 0;
   scene.add(iphoneMvpActor);
-  cans[iphoneMvpSlot] = iphoneMvpActor;
+  cans.push(iphoneMvpActor);
   const iphoneMvpSprite = document.createElement('div');
   iphoneMvpSprite.setAttribute('aria-hidden', 'true');
   const iphoneMvpScreen = document.createElement('img');
@@ -1712,6 +1716,7 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
       actorCount: cans.length,
       iphoneActorCount: cans.filter((actor) => actor.userData.productType === 'iphone-mvp').length,
       canActorCount: cans.filter((actor) => actor.userData.productType !== 'iphone-mvp').length,
+      legacyCanSceneCount: 0,
       position: iphoneMvpActor.position.toArray(),
       rotation: [iphoneMvpActor.rotation.x, iphoneMvpActor.rotation.y, iphoneMvpActor.rotation.z],
       scale: iphoneMvpActor.scale.toArray(),
@@ -2428,12 +2433,18 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
       }
     }
 
-    const minX = cans.length * -0.5 * carousel.spacing;
-    const maxX = cans.length * 0.5 * carousel.spacing;
+    const minX = cans.length === 1 ? -carousel.spacing : cans.length * -0.5 * carousel.spacing;
+    const maxX = cans.length === 1 ? carousel.spacing : cans.length * 0.5 * carousel.spacing;
     const size = maxX - minX;
 
-    carousel.target -= swipe.deltaX * 0.02 * data.swipeSpeed;
-    swipe.deltaX = 0;
+    if (cans.length === 1) {
+      carousel.target = 0;
+      carousel.position = 0;
+      swipe.deltaX = 0;
+    } else {
+      carousel.target -= swipe.deltaX * 0.02 * data.swipeSpeed;
+      swipe.deltaX = 0;
+    }
 
     // Pointer smoothing
     pointer.smoothX = lerp(pointer.smoothX, pointer.x, delta * 10);
@@ -2455,6 +2466,11 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
     }
     carousel.index = index;
 
+    carousel.target = 0;
+    carousel.position = 0;
+    carousel.lastPosition = 0;
+    carousel.offset = 0;
+
     const p0 = clamp(scroll.distanceTo(0) / section.items[0].height, 0, 1);
     timeline.seek(scroll.position / lenis.dimensions.scrollHeight);
 
@@ -2463,8 +2479,8 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
     const wave = windowRatio * 0.25 * (1 - p0) * data.wave;
 
     cans.forEach((can, i) => {
-      var target = i * carousel.spacing - carousel.position;
-      const x = wrap(target, minX, maxX);
+      var target = cans.length === 1 ? 0 : i * carousel.spacing - carousel.position;
+      const x = cans.length === 1 ? 0 : wrap(target, minX, maxX);
 
       // Carousel
       let p = clamp(1 - Math.abs(x) / carousel.spacing, 0, 1);
