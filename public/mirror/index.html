@@ -1632,78 +1632,94 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
   iphoneMvpActor.userData.productType = 'iphone-mvp';
   iphoneMvpActor.userData.preventInnerSpin = true;
   iphoneMvpActor.add(iphoneMvpHit);
-  const iphoneMvpSlot = 0;
+  const iphoneMvpSlot = 1;
   cans.forEach((can) => scene.remove(can));
   cans.length = 0;
   carousel.target = 0;
   carousel.position = 0;
   carousel.lastPosition = 0;
   carousel.offset = 0;
-  scene.add(iphoneMvpActor);
-  cans.push(iphoneMvpActor);
-  const iphoneMvpSprite = document.createElement('div');
-  iphoneMvpSprite.setAttribute('aria-hidden', 'true');
-  const iphoneMvpScreen = document.createElement('img');
-  iphoneMvpScreen.src = '/mirror/media/iphone-actor-mvp/premium-prism-wallpaper.jpg';
-  Object.assign(iphoneMvpSprite.style, {
-    position: 'fixed',
-    left: '0',
-    top: '0',
-    width: '1px',
-    height: '1px',
-    zIndex: '2147483645',
-    pointerEvents: 'none',
-    userSelect: 'none',
-    willChange: 'left, top, width, height, opacity',
+  const iphoneMvpActors = [0, 1, 2].map((slot) => {
+    const actor = slot === iphoneMvpSlot ? iphoneMvpActor : new THREE.Group();
+    if (slot !== iphoneMvpSlot) {
+      const hit = iphoneMvpHit.clone();
+      actor.add(hit);
+      actor.name = `IPhoneActorMvp-${slot}`;
+      actor.userData.productType = 'iphone-mvp';
+      actor.userData.preventInnerSpin = true;
+    }
+    actor.userData.slot = slot;
+    scene.add(actor);
+    cans.push(actor);
+    return actor;
   });
-  Object.assign(iphoneMvpScreen.style, {
-    position: 'absolute',
-    left: `${(72 / 1350) * 100}%`,
-    top: `${(69 / 2760) * 100}%`,
-    width: `${(1206 / 1350) * 100}%`,
-    height: `${(2622 / 2760) * 100}%`,
-    objectFit: 'cover',
-    objectPosition: '50% 58%',
-    borderRadius: '10%',
-  });
-  const iphoneMvpBezel = document.createElement('img');
-  iphoneMvpBezel.src = '/mirror/media/iphone-actor-mvp/iphone-17-pro-official-bezel.png';
-  iphoneMvpBezel.alt = '';
-  Object.assign(iphoneMvpBezel.style, {
-    position: 'absolute',
-    inset: '0',
-    width: '100%',
-    height: '100%',
-    pointerEvents: 'none',
-    userSelect: 'none',
-  });
-  iphoneMvpSprite.append(iphoneMvpScreen, iphoneMvpBezel);
-  document.body.appendChild(iphoneMvpSprite);
-  const iphoneMvpWorld = new THREE.Vector3();
+  const createIphoneMvpSprite = (bezelSrc, colorName) => {
+    const sprite = document.createElement('div');
+    sprite.setAttribute('aria-hidden', 'true');
+    sprite.dataset.iphoneColor = colorName;
+    const screen = document.createElement('img');
+    screen.src = '/mirror/media/iphone-actor-mvp/premium-prism-wallpaper.jpg';
+    Object.assign(sprite.style, {
+      position: 'fixed', left: '0', top: '0', width: '1px', height: '1px',
+      zIndex: '2147483645', pointerEvents: 'none', userSelect: 'none',
+      willChange: 'left, top, width, height, opacity', opacity: '0',
+    });
+    Object.assign(screen.style, {
+      position: 'absolute', left: `${(72 / 1350) * 100}%`, top: `${(69 / 2760) * 100}%`,
+      width: `${(1206 / 1350) * 100}%`, height: `${(2622 / 2760) * 100}%`,
+      objectFit: 'cover', objectPosition: '50% 58%', borderRadius: '10%',
+    });
+    const bezel = document.createElement('img');
+    bezel.src = bezelSrc;
+    bezel.alt = '';
+    Object.assign(bezel.style, {
+      position: 'absolute', inset: '0', width: '100%', height: '100%',
+      pointerEvents: 'none', userSelect: 'none',
+    });
+    sprite.append(screen, bezel);
+    document.body.appendChild(sprite);
+    return sprite;
+  };
+  const iphoneMvpSprites = [
+    createIphoneMvpSprite('/mirror/media/iphone-actor-mvp/iphone-17-pro-silver-bezel.png', 'silver'),
+    createIphoneMvpSprite('/mirror/media/iphone-actor-mvp/iphone-17-pro-official-bezel.png', 'orange'),
+    createIphoneMvpSprite('/mirror/media/iphone-actor-mvp/iphone-17-pro-deep-blue-bezel.png', 'deep-blue'),
+  ];
+  const iphoneMvpSprite = iphoneMvpSprites[iphoneMvpSlot];
+  const iphoneMvpWorlds = iphoneMvpActors.map(() => new THREE.Vector3());
   const iphoneMvpProjected = new THREE.Vector3();
   const iphoneMvpWorldScale = new THREE.Vector3();
   const updateIphoneMvpSprite = () => {
-    iphoneMvpActor.updateWorldMatrix(true, false);
-    iphoneMvpActor.getWorldPosition(iphoneMvpWorld);
-    iphoneMvpProjected.copy(iphoneMvpWorld).project(camera);
-    iphoneMvpActor.getWorldScale(iphoneMvpWorldScale);
-    const visible = Math.abs(iphoneMvpProjected.x) < 1.25 && Math.abs(iphoneMvpProjected.y) < 1.35 && iphoneMvpProjected.z < 1;
-    if (!visible) {
-      iphoneMvpSprite.style.opacity = '0';
-      return;
-    }
-    const centerX = (iphoneMvpProjected.x * 0.5 + 0.5) * window.innerWidth;
-    const centerY = (-iphoneMvpProjected.y * 0.5 + 0.5) * window.innerHeight;
-    const verticalFov = THREE.MathUtils.degToRad(camera.fov);
-    const distance = Math.max(camera.position.distanceTo(iphoneMvpWorld), 0.01);
-    const pixelsPerWorldUnit = window.innerHeight / (2 * Math.tan(verticalFov * 0.5) * distance);
-    const height = iphoneMvpHeight * iphoneMvpWorldScale.y * pixelsPerWorldUnit * 1.098;
-    const width = height * iphoneMvpAspect;
-    iphoneMvpSprite.style.left = `${centerX - width * 0.5}px`;
-    iphoneMvpSprite.style.top = `${centerY - height * 0.5}px`;
-    iphoneMvpSprite.style.width = `${width}px`;
-    iphoneMvpSprite.style.height = `${height}px`;
-    iphoneMvpSprite.style.opacity = '1';
+    iphoneMvpActors.forEach((actor, slot) => {
+      const sprite = iphoneMvpSprites[slot];
+      const world = iphoneMvpWorlds[slot];
+      actor.updateWorldMatrix(true, false);
+      actor.getWorldPosition(world);
+      iphoneMvpProjected.copy(world).project(camera);
+      actor.getWorldScale(iphoneMvpWorldScale);
+      const visible = window.innerWidth < 1024
+        ? (slot === iphoneMvpSlot || iphoneMvpProjected.z < 1)
+        : (Math.abs(iphoneMvpProjected.x) < 1.25 && Math.abs(iphoneMvpProjected.y) < 1.35 && iphoneMvpProjected.z < 1);
+      if (!visible) {
+        sprite.style.opacity = '0';
+        return;
+      }
+      const centerX = (iphoneMvpProjected.x * 0.5 + 0.5) * window.innerWidth;
+      const centerY = (-iphoneMvpProjected.y * 0.5 + 0.5) * window.innerHeight;
+      const verticalFov = THREE.MathUtils.degToRad(camera.fov);
+      const distance = Math.max(camera.position.distanceTo(world), 0.01);
+      const pixelsPerWorldUnit = window.innerHeight / (2 * Math.tan(verticalFov * 0.5) * distance);
+      const isCenter = slot === iphoneMvpSlot;
+      const height = iphoneMvpHeight * iphoneMvpWorldScale.y * pixelsPerWorldUnit * 1.098 * (isCenter ? 1 : 0.82);
+      const width = height * iphoneMvpAspect;
+      const sideInset = window.innerWidth < 1024 ? window.innerWidth * 0.23 : 0;
+      const displayCenterX = isCenter ? centerX : centerX + (slot < iphoneMvpSlot ? sideInset : -sideInset);
+      sprite.style.left = `${displayCenterX - width * 0.5}px`;
+      sprite.style.top = `${centerY - height * 0.5}px`;
+      sprite.style.width = `${width}px`;
+      sprite.style.height = `${height}px`;
+      sprite.style.opacity = '1';
+    });
   };
   window.__ciaoIPhoneActorMvp = {
     actor: iphoneMvpActor,
@@ -1727,6 +1743,14 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
         width: iphoneMvpSprite.style.width,
         height: iphoneMvpSprite.style.height,
       },
+      sprites: iphoneMvpSprites.map((sprite) => ({
+        color: sprite.dataset.iphoneColor,
+        opacity: sprite.style.opacity,
+        left: sprite.style.left,
+        top: sprite.style.top,
+        width: sprite.style.width,
+        height: sprite.style.height,
+      })),
     }),
   };
   document.documentElement.dataset.iphoneActorMvp = 'ready';
@@ -2442,7 +2466,8 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
       carousel.position = 0;
       swipe.deltaX = 0;
     } else {
-      carousel.target -= swipe.deltaX * 0.02 * data.swipeSpeed;
+      carousel.target = 0;
+      carousel.position = 0;
       swipe.deltaX = 0;
     }
 
@@ -2479,8 +2504,8 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
     const wave = windowRatio * 0.25 * (1 - p0) * data.wave;
 
     cans.forEach((can, i) => {
-      var target = cans.length === 1 ? 0 : i * carousel.spacing - carousel.position;
-      const x = cans.length === 1 ? 0 : wrap(target, minX, maxX);
+      var target = (i - iphoneMvpSlot) * carousel.spacing;
+      const x = target;
 
       // Carousel
       let p = clamp(1 - Math.abs(x) / carousel.spacing, 0, 1);
