@@ -1700,7 +1700,7 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
   let iphoneMvpLatchedSlot = iphoneMvpSlot;
   const updateIphoneMvpSprite = () => {
     const heroEnd = section.items[0]?.height || window.innerHeight;
-    const heroOwned = scroll.position < heroEnd;
+    const heroOwned = scroll.position < heroEnd * 0.62;
     if (heroOwned) {
       const centerSource = iphoneMvpActors
         .map((actor, slot) => ({ slot, distance: Math.abs(actor.position.x) }))
@@ -1755,7 +1755,7 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
       canActorCount: cans.filter((actor) => actor.userData.productType !== 'iphone-mvp').length,
       legacyCanSceneCount: 0,
       latchedSlot: iphoneMvpLatchedSlot,
-      heroOwned: scroll.position < (section.items[0]?.height || window.innerHeight),
+      heroOwned: scroll.position < (section.items[0]?.height || window.innerHeight) * 0.62,
       position: iphoneMvpActor.position.toArray(),
       rotation: [iphoneMvpActor.rotation.x, iphoneMvpActor.rotation.y, iphoneMvpActor.rotation.z],
       scale: iphoneMvpActor.scale.toArray(),
