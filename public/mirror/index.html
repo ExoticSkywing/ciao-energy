@@ -3040,9 +3040,13 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
       };
       updatePercent();
 
-      const enterScene = async () => {
-        if (entered || !videoEnded || !sceneReady) return;
-        entered = true;
+      const enterScene = async (force = false) => {
+        if (entered || (!force && (!videoEnded || !sceneReady))) return;
+        if (force) {
+          sceneReady = true;
+          videoEnded = true;
+        }
+        entered = tr...[truncated]
 
         gsap.killTweensOf(percentObj);
         gsap.to(percentObj, {
@@ -3116,6 +3120,8 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
         });
       };
 
+      let lastProgressAt = performance.now();
+      let lastMediaTime = 0;
       if (loaderVideo) {
         loaderVideo.muted = true;
         loaderVideo.playsInline = true;
@@ -3136,7 +3142,11 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
         });
 
         const onTimeUpdate = () => {
-          const d = loaderVideo.duration;
+          if (loaderVideo.currentTime > lastMediaTime + 0.01) {
+            lastMediaTime = loaderVideo.currentTime;
+            lastProgressAt = performance.now();
+          }
+          const d = loa...[truncated]
           if (!d || !isFinite(d)) return;
           const target = Math.min((loaderVideo.currentTime / d) * 99, 99);
           if (target > percentObj.value) {
@@ -3181,10 +3191,10 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
 
       const loaderSafety = setInterval(() => {
         if (entered) return clearInterval(loaderSafety);
-        if (document.documentElement.dataset.ciaoSceneReady === 'true' && loaderVideo?.ended) {
-          sceneReady = true;
-          videoEnded = true;
-          enterScene();
+        const ready = document.documentElement.dataset.ciaoSceneReady === 'true';
+        const stalled = videoStarted && performance.now() - lastProgressAt > 3500;
+        const hardTimeout = performance.now() - lastProgressAt > 12000;
+  ...[truncated]
           clearInterval(loaderSafety);
         }
       }, 100);
