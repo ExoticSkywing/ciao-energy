@@ -1660,7 +1660,7 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
   iphoneMvpActor.userData.productType = 'iphone-mvp';
   iphoneMvpActor.userData.preventInnerSpin = true;
   iphoneMvpActor.add(iphoneMvpHit);
-  const iphoneMvpSlot = 0;
+  const iphoneMvpSlot = lowPower ? 6 : 12;
   const iphoneMvpActorCount = lowPower ? 12 : 24;
   cans.forEach((can) => scene.remove(can));
   cans.length = 0;
@@ -1729,15 +1729,11 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
       actor.getWorldPosition(world);
       iphoneMvpProjected.copy(world).project(camera);
       actor.getWorldScale(iphoneMvpWorldScale);
-      const centerActorSlot = cans.reduce((best, actor, actorSlot) => Math.abs(actor.position.x) < Math.abs(cans[best].position.x) ? actorSlot : best, 0);
-      const nearestCenterSlot = centerActorSlot;
+      const nearestCenterSlot = ((Math.round(carousel.position / carousel.spacing) % cans.length) + cans.length) % cans.length;
       const slotDelta = ((slot - nearestCenterSlot + cans.length * 0.5) % cans.length) - cans.length * 0.5;
-      const mobileViewport = window.innerWidth < 1024;
-      const mobileHero = mobileViewport && scroll.position < section.items[1].top;
+      const mobileHero = window.innerWidth < 1024 && scroll.position < section.items[1].top;
       const visibleLimit = mobileHero ? 0.78 : 0.58;
-      const visible = mobileViewport
-        ? ((!mobileHero || Math.abs(slotDelta) <= 1) && iphoneMvpProjected.z < 1)
-        : (iphoneMvpProjected.x > -visibleLimit && iphoneMvpProjected.x < visibleLimit && Math.abs(iphoneMvpProjected.y) < 1.35 && iphoneMvpProjected.z < 1);
+      const visible = (!mobileHero || Math.abs(slotDelta) <= 1) && iphoneMvpProjected.x > -visibleLimit && iphoneMvpProjected.x < visibleLimit && Math.abs(iphoneMvpProjected.y) < 1.35 && iphoneMvpProjected.z < 1;
       if (!visible) {
         sprite.style.opacity = '0';
         return;
@@ -1745,11 +1741,7 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
       const centerX = (iphoneMvpProjected.x * 0.5 + 0.5) * window.innerWidth;
       const centerY = (-iphoneMvpProjected.y * 0.5 + 0.5) * window.innerHeight;
       const isCenter = slotDelta === 0;
-      const projectedCenterX = mobileHero
-        ? (isCenter
-          ? window.innerWidth * 0.5
-          : window.innerWidth * 0.5 + Math.sign(slotDelta) * window.innerWidth * 0.5)
-        : centerX;
+      const mobileSidePeek = mobileHero && !isCenter;
       const verticalFov = THREE.MathUtils.degToRad(camera.fov);
       const distance = Math.max(camera.position.distanceTo(world), 0.01);
       const pixelsPerWorldUnit = window.innerHeight / (2 * Math.tan(verticalFov * 0.5) * distance);
@@ -1757,9 +1749,9 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
       const width = height * iphoneMvpAspect;
       const sidePeek = window.innerWidth * 0.14;
       const sideCenterOffset = window.innerWidth * 0.5 + width * 0.5 - sidePeek;
-      const displayCenterX = mobileHero
-        ? (isCenter ? window.innerWidth * 0.5 : window.innerWidth * 0.5 + Math.sign(slotDelta) * sideCenterOffset)
-        : projectedCenterX;
+      const displayCenterX = mobileSidePeek
+        ? window.innerWidth * 0.5 + Math.sign(slotDelta) * sideCenterOffset
+        : centerX;
       sprite.style.left = `${displayCenterX - width * 0.5}px`;
       sprite.style.top = `${centerY - height * 0.5}px`;
       sprite.style.width = `${width}px`;
