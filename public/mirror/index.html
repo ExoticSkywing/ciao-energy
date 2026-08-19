@@ -1740,6 +1740,37 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
   const iphoneMvpWorlds = iphoneMvpActors.map(() => new THREE.Vector3());
   const iphoneMvpProjected = new THREE.Vector3();
   const iphoneMvpWorldScale = new THREE.Vector3();
+  const iphoneHeroEntrance = { progress: 0 };
+  const iphoneHeroEntranceReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let iphoneHeroEntrancePlayed = false;
+  const playIphoneHeroEntrance = () => {
+    if (iphoneHeroEntrancePlayed) return;
+    iphoneHeroEntrancePlayed = true;
+    if (iphoneHeroEntranceReducedMotion || !window.gsap) {
+      iphoneHeroEntrance.progress = 1;
+      document.documentElement.dataset.iphoneHeroEntranceProgress = '1.000';
+      document.documentElement.dataset.iphoneHeroEntrance = 'complete';
+      return;
+    }
+    iphoneHeroEntrance.progress = 0;
+    document.documentElement.dataset.iphoneHeroEntranceProgress = '0.000';
+    document.documentElement.dataset.iphoneHeroEntrance = 'running';
+    gsap.to(iphoneHeroEntrance, {
+      progress: 1,
+      duration: 0.48,
+      delay: 0.04,
+      ease: 'power3.out',
+      overwrite: true,
+      onUpdate: () => {
+        document.documentElement.dataset.iphoneHeroEntranceProgress = iphoneHeroEntrance.progress.toFixed(3);
+      },
+      onComplete: () => {
+        iphoneHeroEntrance.progress = 1;
+        document.documentElement.dataset.iphoneHeroEntranceProgress = '1.000';
+        document.documentElement.dataset.iphoneHeroEntrance = 'complete';
+      },
+    });
+  };
   const updateIphoneMvpSprite = () => {
     iphoneMvpActors.forEach((actor, slot) => {
       const sprite = iphoneMvpSprites[slot];
@@ -1759,7 +1790,12 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
       const approachProgress = clamp((29 - data.camPosZ) / 23, 0, 1);
       const actorCompensation = lerp(1, 0.82, approachProgress);
       const focusScale = lerp(0.82, 1, centerProximity);
-      const height = iphoneMvpHeight * iphoneMvpWorldScale.y * pixelsPerWorldUnit * 1.098 * focusScale * actorCompensation;
+      const isHeroCenter = (document.documentElement.dataset.copyStage === 'hero' || document.documentElement.dataset.copyStage === 'intro') && centerProximity > 0.999;
+      const entranceProgress = isHeroCenter ? iphoneHeroEntrance.progress : 1;
+      const entranceScale = lerp(0.84, 1, entranceProgress);
+      const entranceOffsetY = lerp(window.innerHeight * 0.055, 0, entranceProgress);
+      const entranceOpacity = entranceProgress;
+      const height = iphoneMvpHeight * iphoneMvpWorldScale.y * pixelsPerWorldUnit * 1.098 * focusScale * actorCompensation * entranceScale;
       const width = height * iphoneMvpAspect;
       const visible = iphoneMvpProjected.z < 1 && centerX + width * 0.5 > 0 && centerX - width * 0.5 < window.innerWidth;
       if (!visible) {
@@ -1768,10 +1804,10 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
       }
       const displayCenterX = centerX;
       sprite.style.left = `${displayCenterX - width * 0.5}px`;
-      sprite.style.top = `${centerY - height * 0.5}px`;
+      sprite.style.top = `${centerY - height * 0.5 + entranceOffsetY}px`;
       sprite.style.width = `${width}px`;
       sprite.style.height = `${height}px`;
-      sprite.style.opacity = '1';
+      sprite.style.opacity = String(entranceOpacity);
     });
   };
   const transitionProbe = () => {
@@ -2428,6 +2464,7 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
 
     loader.complete = true;
     document.documentElement.dataset.ciaoIntroMotion = 'complete';
+    playIphoneHeroEntrance();
     lenis.start();
     document.documentElement.style.overflow = '';
     document.body.style.overflow = '';
@@ -2446,6 +2483,7 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
     loader.timeline?.progress(1);
     loader.complete = true;
     document.documentElement.dataset.ciaoIntroMotion = 'complete';
+    playIphoneHeroEntrance();
     lenis.start();
     document.documentElement.style.overflow = '';
     document.body.style.overflow = '';
@@ -3141,6 +3179,7 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
           delay: 0.5,
           onStart: () => {
             document.documentElement.dataset.ciaoHeroIntroReleased = 'true';
+            playIphoneHeroEntrance();
             if (typeof window.__ciaoLoader?.play === 'function' && !window.__ciaoLoader.complete && document.documentElement.dataset.ciaoIntroMotion !== 'running') {
               window.__ciaoLoader.play();
             }
