@@ -1736,13 +1736,11 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
       const distance = Math.max(camera.position.distanceTo(world), 0.01);
       const pixelsPerWorldUnit = window.innerHeight / (2 * Math.tan(verticalFov * 0.5) * distance);
       const isCenter = Math.abs(actor.position.x - data.canPosX) < carousel.spacing * 0.48;
-      const stage = document.documentElement.dataset.copyStage || 'hero';
-      const stageScale = stage === 'profile'
-        ? (window.innerWidth < 1024 ? 0.58 : 0.68)
-        : stage.startsWith('benefit-')
-          ? (window.innerWidth < 1024 ? 0.42 : 0.52)
-          : 1;
-      const height = iphoneMvpHeight * iphoneMvpWorldScale.y * pixelsPerWorldUnit * 1.098 * (isCenter ? 1 : 0.82) * stageScale;
+      // Derive actor-local compensation only from CIAO's continuously interpolated camera.
+      // Hero→Taste moves camera z 29→6; this curve grows smoothly, then settles at 0.82.
+      const approachProgress = clamp((29 - data.camPosZ) / 23, 0, 1);
+      const actorCompensation = lerp(1, 0.82, approachProgress);
+      const height = iphoneMvpHeight * iphoneMvpWorldScale.y * pixelsPerWorldUnit * 1.098 * (isCenter ? 1 : 0.82) * actorCompensation;
       const width = height * iphoneMvpAspect;
       const visible = iphoneMvpProjected.z < 1 && centerX + width * 0.5 > 0 && centerX - width * 0.5 < window.innerWidth;
       if (!visible) {
