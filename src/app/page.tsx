@@ -1,7 +1,7 @@
 export default function Page() {
   return (
     <iframe
-      src="/mirror/?v=iphone-native-slots-loader-ios-v2"
+      src="/mirror/?v=iphone-native-slots-mobile-peek-v4"
       title="Ciao Energy"
       style={{
         position: "fixed",
