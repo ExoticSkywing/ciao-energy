@@ -154,15 +154,17 @@
     z-index: 2147483646 !important;
   }
 
-  html[data-copy-stage="profile"] .profile_desc,
-  html[data-copy-stage^="benefit-"] .benefits_container {
+  html[data-copy-stage="profile"] .profile_container,
+  html[data-copy-stage^="benefit-"] .section.is-benefits[data-benefit-active="true"] {
     position: relative;
     z-index: 2147483646 !important;
+    isolation: isolate;
   }
 
-  html[data-copy-stage="profile"] .carousel_title-bis-wrapper,
   html[data-copy-stage="profile"] .profile_desc,
   html[data-copy-stage^="benefit-"] .benefits_text {
+    position: relative;
+    z-index: 2147483646 !important;
     pointer-events: none;
   }
 

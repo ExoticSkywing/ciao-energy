@@ -1,7 +1,7 @@
 export default function Page() {
   return (
     <iframe
-      src="/mirror/?v=iphone-copy-layer-v16"
+      src="/mirror/?v=iphone-parent-stack-v18"
       title="Ciao Energy"
       style={{
         position: "fixed",
