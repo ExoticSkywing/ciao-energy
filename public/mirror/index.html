@@ -150,6 +150,22 @@
     pointer-events: auto;
   }
 
+  html[data-copy-stage="profile"] .carousel_title-bis-wrapper {
+    z-index: 2147483646 !important;
+  }
+
+  html[data-copy-stage="profile"] .profile_desc,
+  html[data-copy-stage^="benefit-"] .benefits_container {
+    position: relative;
+    z-index: 2147483646 !important;
+  }
+
+  html[data-copy-stage="profile"] .carousel_title-bis-wrapper,
+  html[data-copy-stage="profile"] .profile_desc,
+  html[data-copy-stage^="benefit-"] .benefits_text {
+    pointer-events: none;
+  }
+
   .benefits_nav .benefits_icon-wrapper {
     position: relative;
     z-index: 1;
