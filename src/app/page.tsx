@@ -1,7 +1,7 @@
 export default function Page() {
   return (
     <iframe
-      src="/mirror/?v=iphone-parent-stack-v18"
+      src="/mirror/?v=iphone-profile-section-stack-v19"
       title="Ciao Energy"
       style={{
         position: "fixed",
