@@ -1398,6 +1398,7 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
   renderer.outputColorSpace = THREE.SRGBColorSpace;
 
   mainEl.appendChild(renderer.domElement);
+  renderer.domElement.style.touchAction = 'none';
 
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
 
@@ -1660,7 +1661,7 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
   iphoneMvpActor.userData.productType = 'iphone-mvp';
   iphoneMvpActor.userData.preventInnerSpin = true;
   iphoneMvpActor.add(iphoneMvpHit);
-  const iphoneMvpSlot = 0;
+  const iphoneMvpSlot = lowPower ? 6 : 12;
   const iphoneMvpActorCount = lowPower ? 12 : 24;
   cans.forEach((can) => scene.remove(can));
   cans.length = 0;
@@ -1729,37 +1730,20 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
       actor.getWorldPosition(world);
       iphoneMvpProjected.copy(world).project(camera);
       actor.getWorldScale(iphoneMvpWorldScale);
-      const centerActorSlot = cans.reduce((best, actor, actorSlot) => Math.abs(actor.position.x) < Math.abs(cans[best].position.x) ? actorSlot : best, 0);
-      const nearestCenterSlot = centerActorSlot;
-      const slotDelta = ((slot - nearestCenterSlot + cans.length * 0.5) % cans.length) - cans.length * 0.5;
-      const mobileViewport = window.innerWidth < 1024;
-      const mobileHero = mobileViewport && scroll.position < section.items[1].top;
-      const visibleLimit = mobileHero ? 0.78 : 0.58;
-      const visible = mobileViewport
-        ? ((!mobileHero || Math.abs(slotDelta) <= 1) && iphoneMvpProjected.z < 1)
-        : (iphoneMvpProjected.x > -visibleLimit && iphoneMvpProjected.x < visibleLimit && Math.abs(iphoneMvpProjected.y) < 1.35 && iphoneMvpProjected.z < 1);
+      const centerX = (iphoneMvpProjected.x * 0.5 + 0.5) * window.innerWidth;
+      const centerY = (-iphoneMvpProjected.y * 0.5 + 0.5) * window.innerHeight;
+      const verticalFov = THREE.MathUtils.degToRad(camera.fov);
+      const distance = Math.max(camera.position.distanceTo(world), 0.01);
+      const pixelsPerWorldUnit = window.innerHeight / (2 * Math.tan(verticalFov * 0.5) * distance);
+      const isCenter = Math.abs(actor.position.x - data.canPosX) < carousel.spacing * 0.48;
+      const height = iphoneMvpHeight * iphoneMvpWorldScale.y * pixelsPerWorldUnit * 1.098 * (isCenter ? 1 : 0.82);
+      const width = height * iphoneMvpAspect;
+      const visible = iphoneMvpProjected.z < 1 && centerX + width * 0.5 > 0 && centerX - width * 0.5 < window.innerWidth;
       if (!visible) {
         sprite.style.opacity = '0';
         return;
       }
-      const centerX = (iphoneMvpProjected.x * 0.5 + 0.5) * window.innerWidth;
-      const centerY = (-iphoneMvpProjected.y * 0.5 + 0.5) * window.innerHeight;
-      const isCenter = slotDelta === 0;
-      const projectedCenterX = mobileHero
-        ? (isCenter
-          ? window.innerWidth * 0.5
-          : window.innerWidth * 0.5 + Math.sign(slotDelta) * window.innerWidth * 0.5)
-        : centerX;
-      const verticalFov = THREE.MathUtils.degToRad(camera.fov);
-      const distance = Math.max(camera.position.distanceTo(world), 0.01);
-      const pixelsPerWorldUnit = window.innerHeight / (2 * Math.tan(verticalFov * 0.5) * distance);
-      const height = iphoneMvpHeight * iphoneMvpWorldScale.y * pixelsPerWorldUnit * 1.098 * (isCenter ? 1 : 0.82);
-      const width = height * iphoneMvpAspect;
-      const sidePeek = window.innerWidth * 0.14;
-      const sideCenterOffset = window.innerWidth * 0.5 + width * 0.5 - sidePeek;
-      const displayCenterX = mobileHero
-        ? (isCenter ? window.innerWidth * 0.5 : window.innerWidth * 0.5 + Math.sign(slotDelta) * sideCenterOffset)
-        : projectedCenterX;
+      const displayCenterX = centerX;
       sprite.style.left = `${displayCenterX - width * 0.5}px`;
       sprite.style.top = `${centerY - height * 0.5}px`;
       sprite.style.width = `${width}px`;
@@ -1819,8 +1803,12 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
   on(window, 'click', (e) => {
     if (pointer.prevent || swipe.direction != 0 || scroll.position > section.items[1].top) return;
     const mouse = new THREE.Vector2();
-    mouse.x = (e.clientX / renderer.domElement.clientWidth) * 2 - 1;
-    mouse.y = -(e.clientY / renderer.domElement.clientHeight) * 2 + 1;
+    const canvas = renderer.domElement;
+    const canvasRect = canvas.getBoundingClientRect();
+    const x = e.clientX - canvasRect.left;
+    const y = e.clientY - canvasRect.top;
+    mouse.x = (x / canvasRect.width) * 2 - 1;
+    mouse.y = -(y / canvasRect.height) * 2 + 1;
 
     raycast.setFromCamera(mouse, camera);
 
@@ -1858,8 +1846,12 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
     }
 
     const mouse = new THREE.Vector2();
-    mouse.x = (e.clientX / renderer.domElement.clientWidth) * 2 - 1;
-    mouse.y = -(e.clientY / renderer.domElement.clientHeight) * 2 + 1;
+    const canvas = renderer.domElement;
+    const canvasRect = canvas.getBoundingClientRect();
+    const x = e.clientX - canvasRect.left;
+    const y = e.clientY - canvasRect.top;
+    mouse.x = (x / canvasRect.width) * 2 - 1;
+    mouse.y = -(y / canvasRect.height) * 2 + 1;
     raycast.setFromCamera(mouse, camera);
 
     let hoverActive = false;
@@ -2674,8 +2666,9 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
     if (!swipe.active || pointer.prevent) return;
     swipe.holding = true;
     swipe.deltaX = 0;
-    const x = e.touches ? e.touches[0].clientX : e.clientX;
-    const y = e.touches ? e.touches[0].clientY : e.clientY;
+    const rect = renderer.domElement.getBoundingClientRect();
+    const x = e.touches ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
+    const y = e.touches ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
     swipe.startX = x;
     swipe.lastX = x;
     swipe.startY = y;
@@ -2684,8 +2677,9 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
 
   on(window, 'mousemove touchmove', (e) => {
     if (!swipe.active || !swipe.holding || pointer.prevent) return;
-    const x = e.touches ? e.touches[0].clientX : e.clientX;
-    const y = e.touches ? e.touches[0].clientY : e.clientY;
+    const rect = renderer.domElement.getBoundingClientRect();
+    const x = e.touches ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
+    const y = e.touches ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
     const deltaX = x - swipe.lastX;
     const deltaY = y - swipe.lastY;
     if (swipe.direction == 0) {
@@ -4657,7 +4651,7 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
   text-shadow:0 2px 18px rgba(0,0,0,.55);
   opacity:0;
   visibility:hidden;
-  pointer-events:none!important;
+  pointer-events: none !important;
 }
 .local-profile-title span{display:block}
 @media (min-width:1024px){.local-profile-title{bottom:4rem;font-size:clamp(4rem,8vw,9rem)}}
