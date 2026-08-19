@@ -1742,15 +1742,16 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
       const centerY = (-iphoneMvpProjected.y * 0.5 + 0.5) * window.innerHeight;
       const isCenter = slotDelta === 0;
       const mobileSidePeek = mobileHero && !isCenter;
-      const projectedCenterX = mobileSidePeek
-        ? window.innerWidth * 0.5 + Math.sign(slotDelta) * window.innerWidth * 0.58
-        : centerX;
       const verticalFov = THREE.MathUtils.degToRad(camera.fov);
       const distance = Math.max(camera.position.distanceTo(world), 0.01);
       const pixelsPerWorldUnit = window.innerHeight / (2 * Math.tan(verticalFov * 0.5) * distance);
       const height = iphoneMvpHeight * iphoneMvpWorldScale.y * pixelsPerWorldUnit * 1.098 * (isCenter ? 1 : 0.82);
       const width = height * iphoneMvpAspect;
-      const displayCenterX = projectedCenterX;
+      const sidePeek = window.innerWidth * 0.14;
+      const sideCenterOffset = window.innerWidth * 0.5 + width * 0.5 - sidePeek;
+      const displayCenterX = mobileSidePeek
+        ? window.innerWidth * 0.5 + Math.sign(slotDelta) * sideCenterOffset
+        : centerX;
       sprite.style.left = `${displayCenterX - width * 0.5}px`;
       sprite.style.top = `${centerY - height * 0.5}px`;
       sprite.style.width = `${width}px`;
