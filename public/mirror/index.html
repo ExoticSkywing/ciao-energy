@@ -1735,12 +1735,13 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
       const verticalFov = THREE.MathUtils.degToRad(camera.fov);
       const distance = Math.max(camera.position.distanceTo(world), 0.01);
       const pixelsPerWorldUnit = window.innerHeight / (2 * Math.tan(verticalFov * 0.5) * distance);
-      const isCenter = Math.abs(actor.position.x - data.canPosX) < carousel.spacing * 0.48;
-      // Derive actor-local compensation only from CIAO's continuously interpolated camera.
-      // Hero→Taste moves camera z 29→6; this curve grows smoothly, then settles at 0.82.
+      // Use CIAO's continuous center proximity; a boolean C-slot threshold causes a pop
+      // when adjacent actors exchange ownership during drag or arrow navigation.
+      const centerProximity = clamp(1 - Math.abs(actor.position.x - data.canPosX) / carousel.spacing, 0, 1);
       const approachProgress = clamp((29 - data.camPosZ) / 23, 0, 1);
       const actorCompensation = lerp(1, 0.82, approachProgress);
-      const height = iphoneMvpHeight * iphoneMvpWorldScale.y * pixelsPerWorldUnit * 1.098 * (isCenter ? 1 : 0.82) * actorCompensation;
+      const focusScale = lerp(0.82, 1, centerProximity);
+      const height = iphoneMvpHeight * iphoneMvpWorldScale.y * pixelsPerWorldUnit * 1.098 * focusScale * actorCompensation;
       const width = height * iphoneMvpAspect;
       const visible = iphoneMvpProjected.z < 1 && centerX + width * 0.5 > 0 && centerX - width * 0.5 < window.innerWidth;
       if (!visible) {
@@ -1759,9 +1760,13 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
     document.documentElement.dataset.iphoneActorVisibleCount = String(iphoneMvpSprites.filter((sprite) => sprite.style.opacity === '1').length);
     document.documentElement.dataset.iphoneActorSpacing = data.spacing.toFixed(3);
     document.documentElement.dataset.iphoneActorPositions = cans.map((actor) => actor.position.x.toFixed(2)).join(',');
+    document.documentElement.dataset.iphoneActorHeights = iphoneMvpSprites.map((sprite) => parseFloat(sprite.style.height || '0').toFixed(2)).join(',');
+    document.documentElement.dataset.iphoneActorFocus = cans.map((actor) => clamp(1 - Math.abs(actor.position.x - data.canPosX) / carousel.spacing, 0, 1).toFixed(3)).join(',');
   };
   window.__ciaoIPhoneActorMvp = {
     actor: iphoneMvpActor,
+    actors: iphoneMvpActors,
+    sprites: iphoneMvpSprites,
     cans,
     carousel,
     slot: iphoneMvpSlot,
