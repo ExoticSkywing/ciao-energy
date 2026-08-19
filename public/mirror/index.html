@@ -1729,28 +1729,20 @@ La niacine (vitamine B3) et la vitamine B6 contribuent à la réduction de la fa
       actor.getWorldPosition(world);
       iphoneMvpProjected.copy(world).project(camera);
       actor.getWorldScale(iphoneMvpWorldScale);
-      const nearestCenterSlot = ((Math.round(carousel.position / carousel.spacing) % cans.length) + cans.length) % cans.length;
-      const slotDelta = ((slot - nearestCenterSlot + cans.length * 0.5) % cans.length) - cans.length * 0.5;
-      const mobileHero = window.innerWidth < 1024 && scroll.position < section.items[1].top;
-      const visibleLimit = mobileHero ? 0.78 : 0.58;
-      const visible = (!mobileHero || Math.abs(slotDelta) <= 1) && iphoneMvpProjected.x > -visibleLimit && iphoneMvpProjected.x < visibleLimit && Math.abs(iphoneMvpProjected.y) < 1.35 && iphoneMvpProjected.z < 1;
+      const visible = iphoneMvpProjected.x > -0.58 && iphoneMvpProjected.x < 0.58 && Math.abs(iphoneMvpProjected.y) < 1.35 && iphoneMvpProjected.z < 1;
       if (!visible) {
         sprite.style.opacity = '0';
         return;
       }
       const centerX = (iphoneMvpProjected.x * 0.5 + 0.5) * window.innerWidth;
       const centerY = (-iphoneMvpProjected.y * 0.5 + 0.5) * window.innerHeight;
-      const isCenter = slotDelta === 0;
-      const mobileSidePeek = mobileHero && !isCenter;
-      const projectedCenterX = mobileSidePeek
-        ? window.innerWidth * 0.5 + Math.sign(slotDelta) * window.innerWidth * 0.58
-        : centerX;
       const verticalFov = THREE.MathUtils.degToRad(camera.fov);
       const distance = Math.max(camera.position.distanceTo(world), 0.01);
       const pixelsPerWorldUnit = window.innerHeight / (2 * Math.tan(verticalFov * 0.5) * distance);
+      const isCenter = Math.abs(actor.position.x - data.canPosX) < carousel.spacing * 0.48;
       const height = iphoneMvpHeight * iphoneMvpWorldScale.y * pixelsPerWorldUnit * 1.098 * (isCenter ? 1 : 0.82);
       const width = height * iphoneMvpAspect;
-      const displayCenterX = projectedCenterX;
+      const displayCenterX = centerX;
       sprite.style.left = `${displayCenterX - width * 0.5}px`;
       sprite.style.top = `${centerY - height * 0.5}px`;
       sprite.style.width = `${width}px`;
